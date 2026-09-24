@@ -1,0 +1,54 @@
+name: Mirror release to the Xposed module listing
+
+# The Xposed Module Repository listing (Xposed-Modules-Repo/io.github.uraniam9.lostxposed) is
+# a separate repo under a different org, with no connection to this one -- nothing there moves
+# on its own when a release goes out here. Without this, every future release needs a second,
+# identical, easy-to-forget push by hand, and the listing quietly falls behind the real thing.
+#
+# XPOSED_REPO_TOKEN is a classic PAT scoped to `public_repo`, set as a repository secret
+# under Settings -> Secrets and variables -> Actions. The default GITHUB_TOKEN below is only
+# ever used to read this repo's own release; it cannot write to a repo outside this one.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_REPO: Xposed-Modules-Repo/io.github.uraniam9.lostxposed
+      TAG: ${{ github.event.release.tag_name }}
+      TITLE: ${{ github.event.release.name }}
+      PRERELEASE: ${{ github.event.release.prerelease }}
+    steps:
+      - name: Download this release's APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir apk
+          gh release download "$TAG" --repo "$REPO" --pattern "*.apk" --dir apk
+
+      - name: Write the release notes to a file
+        env:
+          BODY: ${{ github.event.release.body }}
+        run: printf '%s\n' "$BODY" > notes.md
+
+      - name: Push the same release to the listing repo
+        env:
+          GH_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          flag=""
+          if [ "$PRERELEASE" = "true" ]; then flag="--prerelease"; fi
+          if gh release create "$TAG" apk/*.apk \
+              --repo "$TARGET_REPO" --title "$TITLE" --notes-file notes.md $flag; then
+            echo "Created $TAG on $TARGET_REPO"
+          else
+            echo "$TAG already exists on $TARGET_REPO -- updating it instead"
+            gh release upload "$TAG" apk/*.apk --repo "$TARGET_REPO" --clobber
+            gh release edit "$TAG" --repo "$TARGET_REPO" --title "$TITLE" --notes-file notes.md
+          fi
