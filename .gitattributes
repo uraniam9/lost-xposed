@@ -1,0 +1,20 @@
+# Normalise to LF in the repository; check out native on Windows.
+* text=auto eol=lf
+
+# Must stay LF or the script fails on Linux/macOS.
+gradlew text eol=lf
+
+# Windows scripts need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never normalise binaries.
+*.jar  binary
+*.apk  binary
+*.aab  binary
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.so   binary
+*.keystore binary
+*.jks  binary

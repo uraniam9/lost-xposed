@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lost Xposed</string>
+    <string name="module_description">Clever Android modifications from the Xposed era, rebuilt for modern Android.</string>
+    <string name="permission_control">Control Lost Xposed hooks</string>
+</resources>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    An X with a hole punched through the crossing, and a node sitting in the hole.
+
+    Earlier drafts drew four separate arms radiating from a gap. At icon size that reads as a
+    propeller, and at 48dp the gap closed up and it was just an X. Two full strokes keep the X
+    unambiguous, and the hole plus node stays legible all the way down.
+
+    The hole is filled with the background gradient's colour at the centre point rather than
+    being transparent, because a vector drawable cannot knock a hole in one path with another
+    unless both are one path with evenOdd. The monochrome layer does it the other way, with
+    four arms, since a tinted layer has no gradient to match.
+
+    Drawn inside the 72x72 safe zone of the 108x108 adaptive canvas.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:pathData="M34,34 L74,74"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="10.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M74,34 L34,74"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="10.5"
+        android:strokeLineCap="round" />
+
+    <!-- The gap. Matches the background gradient where it sits. -->
+    <path
+        android:pathData="M54,45.5 a8.5,8.5 0 1,0 0.01,0 z"
+        android:fillColor="#FF583DCF" />
+
+    <!-- What was rebuilt in the gap. -->
+    <path
+        android:pathData="M54,50.4 a3.6,3.6 0 1,0 0.01,0 z"
+        android:fillColor="#FFFFFFFF" />
+</vector>

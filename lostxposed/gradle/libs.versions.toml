@@ -1,0 +1,15 @@
+[versions]
+agp = "8.13.2"
+kotlin = "2.2.0"
+# Verified against the running framework on 2026-09-20: Vector 2.2 reports API 102.
+libxposed = "102.0.0"
+junit = "4.13.2"
+
+[libraries]
+libxposed-api = { module = "io.github.libxposed:api", version.ref = "libxposed" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

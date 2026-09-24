@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        The only permission this app has anything to do with, and it is its own. The module's
+        restart receiver lives inside SystemUI and has to be exported, since the sender is a
+        different app; signature level means only a build signed with the same key can ask
+        SystemUI to restart. There is no INTERNET permission and no network code.
+    -->
+    <permission
+        android:name="io.github.uraniam9.lostxposed.permission.CONTROL"
+        android:label="@string/permission_control"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="io.github.uraniam9.lostxposed.permission.CONTROL" />
+
+    <!--
+        For the update check and nothing else. One GET of a static JSON file on GitHub, only
+        when the app is opened, cached for twelve hours, and switchable off. Nothing is sent:
+        no identifier, no version, no device details. See UpdateCheck.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".FeatureActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".DiagnosticsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <receiver
+            android:name=".ConfigReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="dev.lostxposed.config.SET" />
+                <action android:name="dev.lostxposed.config.CLEAR" />
+                <action android:name="dev.lostxposed.config.DUMP" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            Exported because the readers are SystemUI, keyboards and ordinary apps, which do
+            not share this module's signature. The provider identifies callers by uid and
+            serves each only the settings that apply to it. See ConfigContentProvider.
+        -->
+        <provider
+            android:name=".ConfigContentProvider"
+            android:authorities="io.github.uraniam9.lostxposed.config"
+            android:exported="true" />
+
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/module_description" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="100" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/xposed_scope" />
+
+    </application>
+
+</manifest>

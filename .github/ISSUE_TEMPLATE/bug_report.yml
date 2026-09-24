@@ -1,0 +1,82 @@
+name: Bug report
+description: Something does not work the way it says it does
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before anything else, please paste the diagnostics. The app builds them
+        for you: **Lost Xposed → Diagnostics → Share report**, or use
+        **About → Report a bug**, which fills them in already.
+
+        They answer most of what I would otherwise have to ask, including the
+        two things that matter most: whether the module is loaded at all, and
+        which config channel is delivering settings on your device.
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: From Diagnostics → Share report.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Which feature
+      options:
+        - Per-app display
+        - Text engine
+        - Clock Studio
+        - Notification rules
+        - Hardware keys
+        - Power inspector
+        - The app itself, not a feature
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and ROM
+      placeholder: "Nothing A065, stock, Android 16"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Xposed framework
+      options: [LSPosed, Vector, Other]
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: >
+        A feature whose process is not in this module's scope installs nothing
+        and reports nothing — it does not fail loudly. The app's main screen
+        lists exactly what needs to be ticked.
+      options:
+        - label: I have ticked everything the app's "Required scope" section lists
+        - label: I restarted the process it names (SystemUI, the app, the keyboard, or rebooted for system_server features)
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Hook-side log (optional)
+      description: "`adb logcat -d -s LostXposed` — the lines around the failure are plenty"
+      render: text

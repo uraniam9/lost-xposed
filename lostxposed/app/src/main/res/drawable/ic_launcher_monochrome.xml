@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Themed-icon layer: the same mark, built as four arms around a gap rather than two strokes
+    with a filled hole. A tinted layer is one colour, so a "hole" has to be an actual absence.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FF000000">
+
+    <path android:pathData="M45.5,45.5 L34,34" android:strokeColor="#FF000000"
+        android:strokeWidth="10.5" android:strokeLineCap="round" />
+    <path android:pathData="M62.5,45.5 L74,34" android:strokeColor="#FF000000"
+        android:strokeWidth="10.5" android:strokeLineCap="round" />
+    <path android:pathData="M45.5,62.5 L34,74" android:strokeColor="#FF000000"
+        android:strokeWidth="10.5" android:strokeLineCap="round" />
+    <path android:pathData="M62.5,62.5 L74,74" android:strokeColor="#FF000000"
+        android:strokeWidth="10.5" android:strokeLineCap="round" />
+    <path android:pathData="M54,50.4 a3.6,3.6 0 1,0 0.01,0 z" android:fillColor="#FF000000" />
+</vector>

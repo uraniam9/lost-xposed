@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        A first-install hint only. It can never be complete: two of the five process targets
+        are not knowable in advance: which keyboard this device uses, and which apps the
+        user wants per-app display for. ScopeAdvice resolves those at runtime and the app
+        shows the full list. Keep this in step with what the features declare.
+    -->
+    <array name="xposed_scope">
+        <!-- Smart status bar, No-op reference. Takes effect on a SystemUI restart. -->
+        <item>com.android.systemui</item>
+        <!-- Notification rules, Hardware keys, Power inspector. system_server; boot only. -->
+        <item>android</item>
+        <!-- Self-scope: lets the module report its own status truthfully in the UI. -->
+        <item>io.github.uraniam9.lostxposed</item>
+    </array>
+</resources>

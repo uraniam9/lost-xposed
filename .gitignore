@@ -1,0 +1,24 @@
+# Build output
+build/
+.gradle/
+*.apk
+*.aab
+
+# Machine-specific — contains the local Android SDK path
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keystores and signing material — never commit
+*.jks
+*.keystore
+keystore.properties
+signing.properties

@@ -1,0 +1,45 @@
+name: Feature request
+description: An old module worth reviving, or something missing here
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The bar for including something is deliberately high: it has to do
+        something Android still will not do for you, and it has to be worth the
+        risk of running code inside your system processes.
+
+        Plenty of clever old modules fail that test now, because Android grew a
+        setting for them. Those are not coming back, and saying so is more
+        useful than a wishlist that never moves.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you want it to do
+      description: Describe the behaviour, not the implementation.
+    validations:
+      required: true
+
+  - type: input
+    id: prior
+    attributes:
+      label: The old module it is like, if there was one
+      placeholder: "SwiftKey Exi, GravityBox, XPrivacyLua…"
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why the built-in Android setting is not enough
+      description: >
+        If a stock setting, a Shortcut, or an accessibility service already does
+        it, that is almost always the better answer — it survives ROM updates
+        and cannot bootloop your phone. Say what it cannot do.
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Nothing A065, Android 16"
