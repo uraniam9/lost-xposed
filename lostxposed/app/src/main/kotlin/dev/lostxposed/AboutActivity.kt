@@ -258,8 +258,8 @@ class AboutActivity : Activity() {
                 "marker it disables the feature rather than run unprotected.",
             "When something does not work it names the step — the class is there, the " +
                 "method is missing. Silence is the failure mode that costs days, so nothing " +
-                "here is allowed to fail quietly. That is also why five of the eight features " +
-                "say they still need testing instead of claiming otherwise.",
+                "here is allowed to fail quietly. That is also why a feature not yet proven on a " +
+                "phone says so on its own card instead of claiming otherwise.",
             "Exactly one network request exists in this app: a GET of a static file on " +
                 "GitHub, to see whether a newer version is out. Only when you open the app, " +
                 "cached for half a day, and switchable off. Nothing is sent with it — no " +

@@ -24,9 +24,8 @@ credited by name, with its licence, in [NOTICE](NOTICE); nothing is copied from 
 one phone — a Nothing AIN065 on Nothing OS 4, Android 16 (SDK 36), under Vector 2.2 with
 libxposed API 102. LSPosed itself is untested. So is every other device.
 
-Three of eight features are proven end to end. Three install correctly and have never been
-observed receiving their settings. Two have never run at all. The app tells you which is which
-on each feature's card, and the state it reports is what somebody actually watched happen.
+The table below says which feature is which, and the state it reports is what somebody
+actually watched happen on a phone — not what the code is supposed to do.
 
 | Feature | What it does | State |
 |---|---|---|
@@ -130,7 +129,7 @@ decided it, not a guess that happened to work.
 Licence detail for every historical module this project looked at, verified against its own
 files rather than assumed, is in [LICENSES.md](LICENSES.md).
 
-94 tests, all JVM, covering the logic that is painful to reach from a device: fuzzy time
+A JVM test suite covers the logic that is painful to reach from a device: fuzzy time
 phrasing across every minute of the day, notification keyword matching, the boot guard's
 fail-closed path, compatibility resolution and the settings key space.
 
@@ -157,14 +156,12 @@ contributor agreement.
 ## Licence
 
 GPL-3.0-or-later. Read it, change it, share it; anything built on it stays free the same way.
-
-That is deliberate rather than reflexive. This is code that hooks `system_server` and reads
-notifications, and nobody should have to trust a binary they cannot audit. It was Apache-2.0
-until 2026-09-23, which would have let anyone ship a closed fork of exactly that.
+This is code that hooks `system_server` and reads notifications, and nobody should have to
+trust a binary they cannot audit.
 
 Clean-room throughout: nothing is copied from the old modules, including the ones whose
-licences would now permit it. That is what lets this project say where every line came from.
-The rules, and which projects may be read at all, are in [LICENSES.md](LICENSES.md).
+licences would now permit it. The rules, and which projects may be read at all, are in
+[LICENSES.md](LICENSES.md).
 
 ---
 
