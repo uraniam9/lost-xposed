@@ -5,8 +5,7 @@ the half that decides whether you should install it.
 
 ## 0.2.0-alpha — 2026-09-23
 
-Not released publicly. Verified on one phone: Nothing AIN065, Nothing OS 4, Android 16,
-Vector 2.2.
+Verified on one phone: Nothing AIN065, Nothing OS 4, Android 16, Vector 2.2.
 
 **Settings now reach hooked processes.** They never did before. Both channels the framework
 documents arrive empty on Vector 2.2, and reading the module's own file by path from SystemUI
