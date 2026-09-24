@@ -1,5 +1,9 @@
 # Lost Xposed
 
+[![Licence: GPL-3.0-or-later](https://img.shields.io/badge/licence-GPL--3.0--or--later-blue)](LICENSE)
+![Android 13+](https://img.shields.io/badge/android-13%2B-3DDC84)
+![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
+
 The settings Android keeps to itself.
 
 Your phone can already do far more than its settings screen admits. Density is one value for
