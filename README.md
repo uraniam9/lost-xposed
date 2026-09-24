@@ -24,9 +24,9 @@ credited by name, with its licence, in [NOTICE](NOTICE); nothing is copied from 
 
 ## Read this before you install it
 
-**It is alpha, and "alpha" here is not modesty.** Everything has been seen working on exactly
-one phone — a Nothing AIN065 on Nothing OS 4, Android 16 (SDK 36), under Vector 2.2 with
-libxposed API 102. LSPosed itself is untested. So is every other device.
+**Everything here has been seen working on exactly one phone** — a Nothing AIN065 on
+Nothing OS 4, Android 16 (SDK 36), under Vector 2.2 with libxposed API 102. LSPosed itself is
+untested. So is every other device.
 
 The table below says which feature is which, and the state it reports is what somebody
 actually watched happen on a phone — not what the code is supposed to do.
@@ -61,7 +61,7 @@ Things restart differently, and the app says which applies:
 
 - SystemUI features take effect on the next SystemUI restart.
 - App and keyboard features take effect the next time that process starts.
-- `system_server` features load **only at boot**. There is no way around that one.
+- `system_server` features load **only at boot**, because that process never restarts on its own the way SystemUI or an app does.
 
 ## Building
 
@@ -92,9 +92,9 @@ module's settings and drops it from the framework's scope list.
 
 ## What it will not do
 
-There is a line, and it is not negotiable. Nothing here bypasses payment, defeats DRM,
-intercepts credentials, or collects anything about you. Privacy features exist to protect the
-person holding the phone — never to help anybody watch somebody else.
+Nothing here bypasses payment, defeats DRM, intercepts credentials, or collects anything
+about you. The privacy features are for the person holding the phone, not for someone else
+checking up on them.
 
 The app makes **one** network request: a GET of `update.json` on GitHub to see whether a newer
 version is out, only when you open it, cached for half a day, and switchable off. Nothing is
@@ -130,8 +130,7 @@ platform rejects a package name that does not match the calling uid.
 That paragraph is the short version of a longer investigation; those measurements are what
 decided it, not a guess that happened to work.
 
-Licence detail for every historical module this project looked at, verified against its own
-files rather than assumed, is in [LICENSES.md](LICENSES.md).
+Every historical module this project drew on is credited, with its licence, in [NOTICE](NOTICE).
 
 A JVM test suite covers the logic that is painful to reach from a device: fuzzy time
 phrasing across every minute of the day, notification keyword matching, the boot guard's
@@ -164,8 +163,8 @@ This is code that hooks `system_server` and reads notifications, and nobody shou
 trust a binary they cannot audit.
 
 Clean-room throughout: nothing is copied from the old modules, including the ones whose
-licences would now permit it. The rules, and which projects may be read at all, are in
-[LICENSES.md](LICENSES.md).
+licences would now permit it. Every one of them is credited, with its own licence, in
+[NOTICE](NOTICE).
 
 ---
 

@@ -15,7 +15,8 @@ Two rules that are not style preferences:
 
 - **Clean room.** Nothing here is copied from another module, including ones whose licence
   would permit it. If you have read the implementation source of a GPL or proprietary project,
-  do not write the corresponding feature here. See [LICENSES.md](LICENSES.md) §4.
+  do not write the corresponding feature here. [NOTICE](NOTICE) names which historical
+  projects that covers.
 - **Nothing fails silently.** A hook that cannot install says which step failed and why. A
   setting that cannot be read says so. "It returned without throwing" is not success.
 
@@ -38,8 +39,9 @@ without finding you and asking. One merged pull request from somebody unreachabl
 option is gone for good.
 
 So this exists to keep a door open, not because there is a queue at it. Realistically an
-Android module has few commercial licensees. It costs one paragraph to preserve and cannot be
-added back later, which is the only reason it is here at the start rather than never.
+Android module has few commercial licensees — but the paragraph is cheap to write now and
+impossible to add once a contribution without it has already been merged, so it goes in from
+the start.
 
 A **DCO** sign-off — certifying you wrote it and have the right to submit it — is a different
 thing and does not grant relicensing rights. If you would rather sign off than agree to the

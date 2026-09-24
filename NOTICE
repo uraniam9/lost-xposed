@@ -51,10 +51,9 @@ modification. Add the entry at the moment of copying.
 
 Note on what changed with the move to GPL-3.0-or-later: GPL-3.0 projects are now
 LICENCE-COMPATIBLE with this one, where under Apache-2.0 they were not. The
-clean-room policy in LICENSES.md is therefore a deliberate choice about
-provenance rather than a legal necessity. It stands. Anything incorporated in
-future must still be recorded here, with its origin and licence, at the moment
-of copying.
+clean-room policy stands anyway, as a choice about where this project's code
+comes from rather than a legal necessity. Anything incorporated in future must
+still be recorded here, with its origin and licence, at the moment of copying.
 
 
 ================================================================================
