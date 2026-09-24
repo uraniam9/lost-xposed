@@ -7,39 +7,37 @@ the half that decides whether you should install it.
 
 Verified on one phone: Nothing AIN065, Nothing OS 4, Android 16, Vector 2.2.
 
-**Settings now reach hooked processes.** They never did before. Both channels the framework
-documents arrive empty on Vector 2.2, and reading the module's own file by path from SystemUI
-returns ENOENT — per-app mount namespaces, which no file mode or SELinux label can change.
-What works is a binder call to a ContentProvider, and it needed a Context built from the
-`LoadedApk` that `ActivityThread` already bound, because the system context is package
-`android` and the platform rejects a package name that does not match the calling uid.
+Settings finally reach hooked processes, which is the change everything else in this release
+sits on top of. Both channels the framework documents arrive empty on Vector 2.2, and reading
+the module's own file by path from SystemUI returns ENOENT, not EACCES — per-app mount
+namespaces, which no file mode or SELinux label can touch. What works is a binder call to a
+ContentProvider, using a Context built from the `LoadedApk` that `ActivityThread` already
+bound, because the system context is package `android` and gets rejected on a uid mismatch
+otherwise.
 
-**Clock Studio.** Compose the status bar clock from pieces — `{fuzzy} · {battery}`,
-`{day} {time}`, whatever you like — then set size, colour, weight and font. Presets sit under
-the setting each one changes. A preview above the settings renders with the same code the
-status bar does, so checking a change no longer costs a SystemUI restart.
+With that working, three things use it directly. Clock Studio composes the status bar clock
+from pieces — `{fuzzy} · {battery}`, `{day} {time}`, whatever you like — with size, colour,
+weight, font, a few presets, and a live preview so checking a change no longer costs a SystemUI
+restart. Per-app display presets are now percentages of your device's own values rather than
+fixed numbers, so they mean the same thing on any phone. Text Engine lists the keyboards
+actually installed instead of asking for a package name typed by hand.
 
-**Restart System UI** as a button. The app cannot do it from outside — `force-stop` on SystemUI
-is a no-op — so the module, already inside that process, ends its own pid and the system brings
-it back.
+Two things needed fixing that weren't about settings at all: SystemUI can't be restarted from
+outside — `force-stop` on it is a no-op — so there's now a button that has the module end its
+own pid from inside and let the system bring it back. And the boot guard, which has always
+disabled risky features after a failed boot, used to do that quietly inside `system_server`;
+it now reports to the app, with what was disabled, why, and a button that mails the
+diagnostics.
 
-**The boot guard speaks.** It has always disabled risky features after a failed boot, but it
-did that in `system_server` where nobody could see it. It now reports to the app, which shows
-what was disabled, why, and a button that mails it with the diagnostics attached.
-
-**Per-app display presets** are percentages of your device's own values, so they mean the same
-thing on any phone. **Text engine** lists the keyboards actually installed rather than asking
-you to type a package name.
-
-**94 tests**, up from zero two versions ago. They found a real bug before a device did: an
-emptied keyboard list fell through to hooking nothing at all, silently, with every setting
-still looking correct.
+A JVM test suite exists now too — 94 tests, up from zero two versions ago — and it already
+caught a real bug before a phone did: an emptied keyboard list fell through to hooking nothing
+at all, silently, with every setting still looking correct.
 
 Renamed to `io.github.uraniam9.lostxposed`. Relicensed to GPL-3.0-or-later.
 
-**Still untested:** per-app display and text engine have never run on a phone. Notification
-rules, hardware keys and power inspector install at boot but have not been seen doing their
-job. LSPosed is untested entirely — everything above is Vector 2.2.
+Still untested: per-app display and text engine have never run on a phone. Notification rules,
+hardware keys and power inspector install at boot but haven't been seen doing their job.
+LSPosed is untested entirely — everything above is Vector 2.2.
 
 ## 0.1.0-alpha — 2026-09-22
 
