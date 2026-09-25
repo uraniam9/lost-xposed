@@ -63,6 +63,12 @@ Things restart differently, and the app says which applies:
 - App and keyboard features take effect the next time that process starts.
 - `system_server` features load **only at boot**, because that process never restarts on its own the way SystemUI or an app does.
 
+**A device reboot is not reliably the same as a SystemUI restart.** On the one device this has
+been checked on, hooks were absent after a genuine reboot until Restart System UI was tapped
+once — scope stayed intact throughout, so this isn't a re-setup problem.
+[Tracked as issue #1](https://github.com/uraniam9/lost-xposed/issues/1); until it's resolved,
+tap Restart System UI once after every boot.
+
 ## Building
 
 ```bash

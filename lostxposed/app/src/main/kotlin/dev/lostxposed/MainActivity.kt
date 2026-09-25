@@ -189,7 +189,7 @@ class MainActivity : Activity() {
                 RestartControl.restart(this, RestartControl.SYSTEM_UI)
                 Toast.makeText(
                     this,
-                    "Asked System UI to restart. The status bar will blink.",
+                    "Asked System UI to restart — the screen may flash a few times before it settles.",
                     Toast.LENGTH_LONG,
                 ).show()
             }
