@@ -540,6 +540,11 @@ class FeatureActivity : Activity() {
     private fun packageTarget(): String =
         packageField.text?.toString()?.trim()?.ifEmpty { null } ?: ConfigSchema.ANY_PACKAGE
 
+    // ConfigSchema.ANY_PACKAGE is a storage-key sentinel ("*"), not a word for a person to read.
+    // It leaked straight into two toasts as the literal asterisk before this existed.
+    private fun targetPhrase(target: String): String =
+        if (target == ConfigSchema.ANY_PACKAGE) "every app" else "\"$target\""
+
     private fun save() {
         val target = packageTarget()
         var written = 0
@@ -571,7 +576,7 @@ class FeatureActivity : Activity() {
         refreshPreview()
         toast(
             rejected?.let { "\"$it\" is not a valid number — nothing saved for it" }
-                ?: "Saved $written setting(s) for $target — ${descriptor.restartHint}",
+                ?: "Saved $written setting(s) for ${targetPhrase(target)} — ${descriptor.restartHint}",
         )
     }
 
@@ -580,7 +585,7 @@ class FeatureActivity : Activity() {
         writer.removeAll(descriptor.id, target)
         toast(
             if (descriptor.settings.any { it.perPackage }) {
-                "Cleared $target — ${descriptor.restartHint}"
+                "Cleared for ${targetPhrase(target)} — ${descriptor.restartHint}"
             } else {
                 "Cleared — ${descriptor.restartHint}"
             },
