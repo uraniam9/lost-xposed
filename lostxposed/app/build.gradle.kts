@@ -23,8 +23,8 @@ val signing = rootProject.file("keystore.properties").takeIf { it.exists() }?.le
  * drifted a whole release behind by the time anybody looked -- LSPosed said 0.1.0 while
  * the app said 0.2.0-alpha. So module.prop is generated below rather than committed.
  */
-val moduleVersionCode = 2
-val moduleVersionName = "0.2.0-alpha"
+val moduleVersionCode = 3
+val moduleVersionName = "0.2.1-alpha"
 
 /*
  * module.prop is what the framework manager lists this as: the name in the module list, the
