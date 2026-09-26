@@ -58,7 +58,7 @@ class CompatTableBuilder<S> {
         fallback = strategy
     }
 
-    /** No strategy for unknown environments — produces a diagnosable reason, not a no-op. */
+    /** No strategy for unknown environments: produces a diagnosable reason, not a no-op. */
     fun fallbackUnsupported(reason: Reason = Reason.NO_STRATEGY_FOR_ENV) {
         fallback = null
         fallbackReason = reason

@@ -1,5 +1,5 @@
 <#
-    Lost Xposed — one-command QA.
+    Lost Xposed: one-command QA.
 
     Nothing here needs a device reboot. The only thing that would is a system_server hook,
     and there is deliberately none until the boot safety guard exists. Everything else is a
@@ -33,7 +33,7 @@ $script:results = @()
 function Record($name, $ok, $detail) {
     $script:results += [pscustomobject]@{ Check = $name; Result = $(if ($ok) { "PASS" } else { "FAIL" }); Detail = $detail }
     $colour = if ($ok) { "Green" } else { "Red" }
-    Write-Host ("  [{0}] {1} — {2}" -f $(if ($ok) { "PASS" } else { "FAIL" }), $name, $detail) -ForegroundColor $colour
+    Write-Host ("  [{0}] {1}: {2}" -f $(if ($ok) { "PASS" } else { "FAIL" }), $name, $detail) -ForegroundColor $colour
 }
 
 function Sh($cmd) { & $Adb shell $cmd 2>&1 | Out-String }
@@ -105,7 +105,7 @@ $log = LogSince
 # the file the hooked processes fall back to reading.
 $wrote = $log -match "snapshot (\d+) bytes"
 Record "config written" $wrote $(
-    if ($wrote) { "snapshot $($Matches[1]) bytes" } else { "no snapshot written — see logcat -s LostXposed" }
+    if ($wrote) { "snapshot $($Matches[1]) bytes" } else { "no snapshot written, see logcat -s LostXposed" }
 )
 
 # ---------------------------------------------------------------- SystemUI injection
@@ -114,7 +114,7 @@ Write-Host "`nRestarting SystemUI (am crash, not force-stop)..."
 Sh "am crash com.android.systemui" | Out-Null
 Start-Sleep -Seconds 14
 $log = LogSince
-Record "systemui injection" ($log -match "LostXposed — com.android.systemui") "engine ran in SystemUI"
+Record "systemui injection" ($log -match "LostXposed in com.android.systemui") "engine ran in SystemUI"
 Record "framework detected" ($log -match "api 102") $(
     if ($log -match "config: (.+?)\s*$") { "config: $($Matches[1])" } else { "see log" }
 )
@@ -125,7 +125,7 @@ Record "noop installed" ($log -match "No-op reference\s+installed") "reference f
 $delivered = $log -match "channel=(?!none)(\S+)"
 Record "config delivered to SystemUI" $delivered $(
     if ($delivered) { "channel=$($Matches[1])" }
-    elseif ($log -match "(remote-prefs=\S+ remote-file=\S+ direct-file=\S+)") { "no channel — $($Matches[1])" }
+    elseif ($log -match "(remote-prefs=\S+ remote-file=\S+ direct-file=\S+)") { "no channel: $($Matches[1])" }
     else { "no channel report in log" }
 )
 
@@ -149,7 +149,7 @@ Sh "monkey -p $TargetApp -c android.intent.category.LAUNCHER 1" | Out-Null
 Start-Sleep -Seconds 8
 $log = LogSince
 Record "display profile applied" ($log -match "applied .*400dpi") $(
-    if ($log -match "applied (.+?)\s*$") { $Matches[1] } else { "no 'applied' line — is $TargetApp in the module scope?" }
+    if ($log -match "applied (.+?)\s*$") { $Matches[1] } else { "no 'applied' line. Is $TargetApp in the module scope?" }
 )
 Sh "am broadcast -p dev.lostxposed -a dev.lostxposed.config.CLEAR --es package $TargetApp" | Out-Null
 Sh "am force-stop $TargetApp" | Out-Null
@@ -167,7 +167,7 @@ Start-Sleep -Seconds 6
 $log = LogSince
 Record "text engine hooked" ($log -match "gestures active") $(
     if ($log -match "gestures active on (.+?)\s*$") { $Matches[1] }
-    else { "no 'gestures active' — is $ImePackage in the module scope and a known IME?" }
+    else { "no 'gestures active'. Is $ImePackage in the module scope and a known IME?" }
 )
 
 # ---------------------------------------------------------------- smart status bar
@@ -179,7 +179,7 @@ Sh "am crash com.android.systemui" | Out-Null
 Start-Sleep -Seconds 14
 $log = LogSince
 Record "smart status bar" ($log -match "clock style=FUZZY") $(
-    if ($log -match "clock style=(\S+)") { "style $($Matches[1]) — check the status bar reads e.g. 'quarter past three'" }
+    if ($log -match "clock style=(\S+)") { "style $($Matches[1]); check the status bar reads e.g. 'quarter past three'" }
     else { "no 'clock style' line" }
 )
 
@@ -188,7 +188,7 @@ Write-Host "`nsystem_server features..."
 if ($PostReboot) {
     $log = (& $Adb logcat -d -s LostXposed 2>&1) -join "`n"
     Record "boot guard armed" ($log -match "boot guard armed|BOOT GUARD TRIPPED") $(
-        if ($log -match "BOOT GUARD TRIPPED: (.+)") { "TRIPPED — $($Matches[1])" }
+        if ($log -match "BOOT GUARD TRIPPED: (.+)") { "TRIPPED: $($Matches[1])" }
         elseif ($log -match "boot guard armed for (\d+)") { "armed for $($Matches[1]) feature(s)" }
         else { "no guard line" }
     )
@@ -200,7 +200,7 @@ if ($PostReboot) {
     $power = (& $Adb logcat -d -s LostXposed 2>&1) -join "`n"
     Record "power ledger" ($power -match "wakelocks") "ledger reported"
 } else {
-    Write-Host "  skipped — these inject at boot only." -ForegroundColor Yellow
+    Write-Host "  skipped: these inject at boot only." -ForegroundColor Yellow
     Write-Host "  Reboot once, then: .\qa.ps1 -SkipBuild -PostReboot" -ForegroundColor Yellow
     Write-Host "  That single reboot also exercises the boot guard, which cannot be" -ForegroundColor Yellow
     Write-Host "  tested any other way and exists to stop you needing many more." -ForegroundColor Yellow

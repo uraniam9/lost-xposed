@@ -32,7 +32,7 @@ data class TextEngineSettings(
         /**
          * Which packages count as keyboards. Hooking every app process for a feature that
          * only fires in an IME would be wasteful, and there is no cheap way to detect an IME
-         * from inside `onPackageLoaded` — no Context exists yet.
+         * from inside `onPackageLoaded`, where no Context exists yet.
          *
          * Overridable via config so an unlisted keyboard can be added without a new build.
          */

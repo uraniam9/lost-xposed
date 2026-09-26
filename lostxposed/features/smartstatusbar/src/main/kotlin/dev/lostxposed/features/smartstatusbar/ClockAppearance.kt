@@ -12,7 +12,7 @@ import dev.lostxposed.core.api.ConfigSource
  * How the clock text looks, applied as spans on the string the clock already returns.
  *
  * Spans rather than touching the `TextView`. The hook replaces the return value of
- * `getSmallTime()`, and a span travels with that value — so nothing reaches into SystemUI's
+ * `getSmallTime()`, and a span travels with that value, so nothing reaches into SystemUI's
  * view tree, nothing has to be undone when the feature is disabled, and a repaint from
  * somewhere unexpected cannot leave the clock permanently restyled.
  *

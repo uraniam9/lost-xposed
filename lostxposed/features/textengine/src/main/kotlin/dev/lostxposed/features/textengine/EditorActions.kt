@@ -8,7 +8,7 @@ import android.view.inputmethod.InputConnection
  *
  * This is the whole reason Text Engine is not a SwiftKey mod. `InputConnection` is the
  * contract every keyboard uses to talk to every editor, so these work in View-based apps,
- * Jetpack Compose `BasicTextField`, WebView and Flutter alike — none of which a `TextView`
+ * Jetpack Compose `BasicTextField`, WebView and Flutter alike, none of which a `TextView`
  * hook can reach.
  *
  * Cursor movement goes through DPAD key events rather than `setSelection`, because absolute

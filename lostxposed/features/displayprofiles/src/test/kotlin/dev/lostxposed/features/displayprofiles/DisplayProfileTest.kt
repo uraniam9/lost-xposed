@@ -19,7 +19,7 @@ class DisplayProfileTest {
 
     /**
      * The rule the whole feature rests on: a profile that sets one thing must not quietly
-     * reset the other two. Zero means "leave alone", not "set it to zero" — which for density
+     * reset the other two. Zero means "leave alone", not "set it to zero", which for density
      * would be an app that cannot lay itself out.
      */
     @Test

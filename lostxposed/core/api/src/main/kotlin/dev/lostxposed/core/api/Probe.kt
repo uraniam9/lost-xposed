@@ -5,14 +5,14 @@ package dev.lostxposed.core.api
  *
  * Lives in core:api rather than core:diagnostics because [Injection] declares its probes;
  * putting them in diagnostics would make api depend on it, and diagnostics already depends
- * on api. The *runner* stays in diagnostics — this is only the contract.
+ * on api. The *runner* stays in diagnostics; this is only the contract.
  */
 sealed interface Outcome {
     data class Pass(val detail: String) : Outcome
     data class Warn(val detail: String, val hint: String? = null) : Outcome
     data class Fail(val reason: Reason, val hint: String? = null) : Outcome
 
-    /** Not applicable here — ends the chain quietly rather than as a failure. */
+    /** Not applicable here: ends the chain quietly rather than as a failure. */
     data class Skip(val reason: Reason) : Outcome
 }
 

@@ -74,7 +74,7 @@ class BootGuardTest {
 
     /**
      * Fail closed. A crash detector that cannot write its marker cannot detect a crash, and
-     * running risky hooks unprotected is worse than not running them — the cost of being
+     * running risky hooks unprotected is worse than not running them. The cost of being
      * wrong here is a factory reset.
      */
     @Test

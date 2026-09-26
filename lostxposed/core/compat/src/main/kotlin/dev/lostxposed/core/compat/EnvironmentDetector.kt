@@ -31,7 +31,7 @@ object EnvironmentDetector {
     }.getOrDefault(FrameworkInfo.UNKNOWN)
 
     /**
-     * OEM skin, not just manufacturer — behaviour follows the skin. Checked most specific
+     * OEM skin, not just manufacturer, because behaviour follows the skin. Checked most specific
      * first because several of these ship on hardware from more than one brand.
      */
     private fun detectOem(): Pair<Oem, String?> {

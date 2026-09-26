@@ -4,7 +4,7 @@ build/
 *.apk
 *.aab
 
-# Machine-specific — contains the local Android SDK path
+# Machine-specific: contains the local Android SDK path
 local.properties
 
 # IDE
@@ -17,7 +17,7 @@ local.properties
 .DS_Store
 Thumbs.db
 
-# Keystores and signing material — never commit
+# Keystores and signing material. Never commit
 *.jks
 *.keystore
 keystore.properties

@@ -16,8 +16,8 @@ import java.io.File
  * plainly succeeded. Finding a marker still present at the next `system_server` start means
  * the previous boot did not get that far, so the risky features are disabled for this boot.
  *
- * **Fails closed.** If the marker cannot be written — SELinux denial, read-only filesystem,
- * anything — risky features are disabled rather than run unprotected. A crash-detector that
+ * **Fails closed.** If the marker cannot be written (SELinux denial, read-only filesystem,
+ * anything), risky features are disabled rather than run unprotected. A crash-detector that
  * cannot detect crashes is worse than no feature at all, because it invites the risk while
  * providing none of the protection.
  */
@@ -60,7 +60,7 @@ class BootGuard(private val marker: File, private val clock: () -> Long = System
      * Clears the marker once boot has plainly succeeded.
      *
      * Survival is the signal. A device that bootloops never reaches this, and a timer needs no
-     * cooperation from any particular Android version — which matters because the internals
+     * cooperation from any particular Android version, which matters because the internals
      * that would signal "boot complete" move between releases and this code must not.
      */
     fun scheduleSuccessSignal(delayMs: Long = SUCCESS_DELAY_MS, onCleared: () -> Unit = {}) {

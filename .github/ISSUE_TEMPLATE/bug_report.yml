@@ -68,7 +68,7 @@ body:
       label: Scope
       description: >
         A feature whose process is not in this module's scope installs nothing
-        and reports nothing — it does not fail loudly. The app's main screen
+        and reports nothing. It does not fail loudly. The app's main screen
         lists exactly what needs to be ticked.
       options:
         - label: I have ticked everything the app's "Required scope" section lists
@@ -78,5 +78,5 @@ body:
     id: log
     attributes:
       label: Hook-side log (optional)
-      description: "`adb logcat -d -s LostXposed` — the lines around the failure are plenty"
+      description: "`adb logcat -d -s LostXposed`. The lines around the failure are plenty."
       render: text

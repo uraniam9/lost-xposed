@@ -115,7 +115,7 @@ class FuzzyTimeTest {
 
     /**
      * The phrase is built from two arrays indexed by arithmetic on the minute, so every
-     * minute of every hour has to be walked — an off-by-one shows up as a crash in
+     * minute of every hour has to be walked: an off-by-one shows up as a crash in
      * SystemUI, which is not a place to discover one.
      */
     @Test

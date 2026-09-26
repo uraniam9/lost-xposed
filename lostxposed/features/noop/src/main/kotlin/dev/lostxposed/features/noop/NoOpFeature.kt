@@ -16,7 +16,7 @@ import dev.lostxposed.core.api.methodPresent
 import io.github.libxposed.api.XposedInterface
 
 /**
- * The reference feature. It changes nothing observable — it counts invocations and returns
+ * The reference feature. It changes nothing observable: it counts invocations and returns
  * the original result untouched.
  *
  * Its whole job is to be the Phase 3 exit criterion: prove that the engine can select a
@@ -54,7 +54,7 @@ class NoOpFeature : Injection {
 
     /**
      * Counting proves the hook actually executes. Without it, "installed" and "installed but
-     * never called" are indistinguishable — the trap spike-01 avoided the same way.
+     * never called" are indistinguishable, the trap spike-01 avoided the same way.
      */
     object Counter : XposedInterface.Hooker {
         @Volatile

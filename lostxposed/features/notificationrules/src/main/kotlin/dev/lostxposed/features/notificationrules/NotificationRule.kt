@@ -9,7 +9,7 @@ import dev.lostxposed.core.api.ConfigSource
  *
  * Keyword matching is the reason this feature exists at all. Android's own channels already
  * give coarse per-category control, and a NotificationListener can dismiss things after the
- * fact — but neither can suppress *before display*, and neither can match on content. Only a
+ * fact, but neither can suppress *before display*, and neither can match on content. Only a
  * hook inside NotificationManagerService can.
  */
 data class NotificationRule(
@@ -27,7 +27,7 @@ data class NotificationRule(
 
     /**
      * The decision itself, over already-extracted text. Separate from [blocks] so the matching
-     * rules can be tested without an Android runtime — this runs inside
+     * rules can be tested without an Android runtime. This runs inside
      * NotificationManagerService, where getting it wrong means a notification the user needed
      * is silently gone.
      */

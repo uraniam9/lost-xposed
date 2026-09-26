@@ -8,8 +8,8 @@ import dev.lostxposed.core.api.FeatureId
 /**
  * A flat key → string view of the config, whatever channel it arrived through.
  *
- * Every transport is normalised to this one shape — remote preferences, a file served by the
- * framework, a file read straight off disk — so the resolution rules (per-package over
+ * Every transport is normalised to this one shape (remote preferences, a file served by the
+ * framework, a file read straight off disk), so the resolution rules (per-package over
  * per-feature default, type coercion, empty check) exist once and are the same regardless of
  * which channel happened to work on a given device.
  */
@@ -28,7 +28,7 @@ class MapConfigStore(private val values: Map<String, String>) : ConfigStore {
 
 /**
  * Read once and cached, because [ConfigSource] is documented as immutable for the life of the
- * process — and because `SharedPreferences.all` copies the whole map on every call, which over
+ * process, and because `SharedPreferences.all` copies the whole map on every call, which over
  * a Binder to another process is not something to do per lookup.
  */
 fun SharedPreferences.asConfigStore(): ConfigStore = MapConfigStore(

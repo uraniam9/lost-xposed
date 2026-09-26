@@ -1,7 +1,7 @@
 # Contributing
 
 Bug reports and device profiles are the most useful thing you can send. The app builds a
-diagnostics report for you — **Diagnostics → Share report**, or **About → Report a bug**, which
+diagnostics report for you: **Diagnostics → Share report**, or **About → Report a bug**, which
 fills it in already.
 
 ## Before you open a pull request
@@ -32,18 +32,18 @@ This project is GPL-3.0-or-later, which means anybody can read it, change it and
 anything built on it stays free the same way. That is the point and it is not changing.
 
 Separately, the copyright holder can license the same code to somebody else on different
-terms — say, to a company that wants it inside a closed product. That is only possible if the
+terms, for example to a company that wants it inside a closed product. That is only possible if the
 copyright holder has the right to do it for **every line**. Your contribution is yours; merging
 it under GPL-3.0 alone would mean the project could never offer those other terms again
 without finding you and asking. One merged pull request from somebody unreachable, and the
 option is gone for good.
 
 So this exists to keep a door open, not because there is a queue at it. Realistically an
-Android module has few commercial licensees — but the paragraph is cheap to write now and
+Android module has few commercial licensees, but the paragraph is cheap to write now and
 impossible to add once a contribution without it has already been merged, so it goes in from
 the start.
 
-A **DCO** sign-off — certifying you wrote it and have the right to submit it — is a different
+A **DCO** sign-off (certifying you wrote it and have the right to submit it) is a different
 thing and does not grant relicensing rights. If you would rather sign off than agree to the
 above, say so in the pull request and the change can be looked at on that basis; it just
 cannot be merged into a part of the code that might be dual-licensed.
@@ -51,7 +51,7 @@ cannot be merged into a part of the code that might be dual-licensed.
 ## Supporters
 
 New features reach [supporters](https://buymeacoffee.com/uraniam9) a release early. Nothing is
-locked, nothing checks whether anybody paid, and every feature lands for everyone — supporters
+locked, nothing checks whether anybody paid, and every feature lands for everyone. Supporters
 just see it first. Fixes are the exception: anything that repairs a bootloop, a crash or a
 battery problem ships to everyone at once, because holding a repair back to protect a perk
 would be indefensible. A licence like this one could not enforce a lock anyway, since anybody could

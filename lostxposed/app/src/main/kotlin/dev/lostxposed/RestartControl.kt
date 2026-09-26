@@ -43,7 +43,7 @@ object RestartControl {
     /**
      * Whether anything the user has configured needs [packageName] restarted.
      *
-     * Only true when there is something to restart *for* — showing the button on a screen
+     * Only true when there is something to restart *for*. Showing the button on a screen
      * where nothing has been set would be an invitation to a pointless flicker.
      */
     fun isNeededFor(descriptorsWithSettings: List<String>): Boolean =

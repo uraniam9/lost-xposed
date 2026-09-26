@@ -42,7 +42,7 @@ class ClockRenderer(private val settings: SmartStatusBarFeature.Settings) {
 
     /**
      * The finished text, styled, or null when the style is `system` and there is nothing to
-     * say — the caller then leaves whatever the clock already had.
+     * say; the caller then leaves whatever the clock already had.
      */
     fun text(
         now: Date = Calendar.getInstance().time,

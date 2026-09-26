@@ -29,14 +29,14 @@ import java.util.Locale
 /**
  * The status bar clock as a programmable surface.
  *
- * Adding seconds and a date is not a feature — Iconify, AOSP Mods, Pixel Xpert and most OEM
+ * Adding seconds and a date is not a feature: Iconify, AOSP Mods, Pixel Xpert and most OEM
  * skins already do that, which is why this scored 49/75 and sits late in the plan. The
  * differentiator is the provider model: the clock renders whatever a named provider returns,
  * so "fuzzy time" and "battery percentage" are configuration rather than code.
  *
  * Structured so the data layer survives its own render layer. spike-01 found Compose and
  * `SceneWindowRootView` already live in SystemUI, so the `TextView` this hooks will eventually
- * disappear — at which point the providers can be re-pointed at a QS tile or an overlay
+ * disappear, at which point the providers can be re-pointed at a QS tile or an overlay
  * without rewriting them.
  */
 class SmartStatusBarFeature : Injection {
@@ -46,14 +46,14 @@ class SmartStatusBarFeature : Injection {
         name = "Clock Studio",
         description = "Build the status bar clock yourself: what it says, and how it looks.",
         detail = "Four ways to write the clock, and you pick one with Clock style.\n\n" +
-            "system \u2014 leave the text alone. Pick this if you only want to change the " +
+            "system: leave the text alone. Pick this if you only want to change the " +
             "size, colour, weight or font below.\n\n" +
-            "fuzzy \u2014 the time as people say it out loud: \"quarter past three\", " +
+            "fuzzy: the time as people say it out loud, like \"quarter past three\" or " +
             "\"twenty to nine\". Rounded to the nearest five minutes on purpose; an " +
             "exact clock is what you already had.\n\n" +
-            "custom \u2014 your own date format, using SimpleDateFormat letters. HH:mm is " +
+            "custom: your own date format, using SimpleDateFormat letters. HH:mm is " +
             "24-hour, h:mm a is 12-hour with am/pm, EEE is the short day name.\n\n" +
-            "mixer \u2014 write the line yourself and drop pieces into it. Type anything " +
+            "mixer: write the line yourself and drop pieces into it. Type anything " +
             "you like around them; only the {pieces} are replaced.\n\n" +
             "Every change here needs SystemUI restarted before you see it, which is " +
             "what the button at the bottom of the main screen is for.",
@@ -65,7 +65,7 @@ class SmartStatusBarFeature : Injection {
             SettingSpec(
                 KEY_STYLE, "Clock style", SettingSpec.Type.ENUM, default = "system",
                 options = listOf("system", "fuzzy", "custom", "mixer"), perPackage = false,
-                help = "system leaves the text alone \u2014 use it if you only want to " +
+                help = "system leaves the text alone, for when you only want to " +
                     "restyle. fuzzy says the time out loud. custom takes a date format. " +
                     "mixer lets you write the line. Only the setting for the style you " +
                     "pick is used; the others are ignored.",
@@ -105,8 +105,8 @@ class SmartStatusBarFeature : Injection {
                     setOf("system", "fuzzy", "custom"),
                 ),
                 help = "Adds the charge level after the time. Ignored when style is " +
-                    "mixer, where {battery} already says where you want it \u2014 " +
-                    "otherwise it would appear twice.",
+                    "mixer: put {battery} in the line there instead, or it would show " +
+                    "twice.",
             ),
             SettingSpec(
                 ClockAppearance.KEY_SCALE, "Text size", SettingSpec.Type.FLOAT, default = "1.0",
@@ -308,7 +308,7 @@ class SmartStatusBarFeature : Injection {
         /**
          * Which clock class to hook, per environment.
          *
-         * Every entry here is AOSP's today — measured on Nothing OS / Android 16, and the
+         * Every entry here is AOSP's today, measured on Nothing OS / Android 16, and the
          * same class is what Iconify and Pixel Xpert hook on Pixel and Samsung. The table is
          * not redundant despite that: an unlisted OEM resolves to **no strategy** and says so
          * in diagnostics, rather than silently hooking a class that may not be the clock. A

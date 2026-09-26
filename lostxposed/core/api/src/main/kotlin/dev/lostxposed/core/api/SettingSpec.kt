@@ -74,7 +74,7 @@ data class SettingSpec(
  * Fills the form rather than saving: someone picking "Fit more on screen" should be able to
  * see what that means and adjust it before committing, not discover it afterwards.
  *
- * A value may be `%N` — N percent of whatever the setting declares as its [SettingSpec.Baseline].
+ * A value may be `%N`: N percent of whatever the setting declares as its [SettingSpec.Baseline].
  */
 data class Template(
     val name: String,
@@ -88,7 +88,7 @@ data class Template(
      * section three screens up is a thing you have to go and look for, and a separate section
      * also pushes the actual settings below the fold.
      *
-     * A preset may still set several values — this only says where it is shown.
+     * A preset may still set several values; this only says where it is shown.
      */
     val anchor: String? = null,
 )

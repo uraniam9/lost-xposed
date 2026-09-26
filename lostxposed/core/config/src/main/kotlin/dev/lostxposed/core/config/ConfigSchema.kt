@@ -18,7 +18,7 @@ object ConfigSchema {
      * Bump when the meaning of existing keys changes, not when keys are added.
      *
      * A hooked process running older code must REFUSE a newer schema rather than
-     * misinterpret it — in system_server a misread is a bootloop, not a glitch.
+     * misinterpret it. In system_server a misread is a bootloop, not a glitch.
      */
     const val VERSION = 1
 
@@ -28,7 +28,7 @@ object ConfigSchema {
     /**
      * Flat mirror of the whole key space, served through `openRemoteFile()` and readable
      * directly off disk. One `key=value` line each, in [Snapshot]'s own format rather than
-     * `java.util.Properties` — see that class for why.
+     * `java.util.Properties`; see that class for why.
      */
     const val SNAPSHOT_NAME = "config.properties"
     const val ANY_PACKAGE = "*"

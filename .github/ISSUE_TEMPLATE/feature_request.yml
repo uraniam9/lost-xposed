@@ -33,7 +33,7 @@ body:
       label: Why the built-in Android setting is not enough
       description: >
         If a stock setting, a Shortcut, or an accessibility service already does
-        it, that is almost always the better answer — it survives ROM updates
+        it, that is almost always the better answer: it survives ROM updates
         and cannot bootloop your phone. Say what it cannot do.
     validations:
       required: true

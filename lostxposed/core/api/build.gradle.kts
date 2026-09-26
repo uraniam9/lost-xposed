@@ -16,6 +16,6 @@ android {
 
 dependencies {
     // compileOnly: supplied by the framework at runtime, so it costs nothing in
-    // system_server. NOTHING ELSE belongs here — see the module KDoc.
+    // system_server. NOTHING ELSE belongs here; see the module KDoc.
     compileOnly(libs.libxposed.api)
 }

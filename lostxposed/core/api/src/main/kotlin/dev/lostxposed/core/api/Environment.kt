@@ -34,7 +34,7 @@ data class FrameworkInfo(
 ) {
     val canHookSystem: Boolean get() = capabilities and CAP_SYSTEM != 0L
 
-    /** Remote preferences and remote files — the cross-process config channel. */
+    /** Remote preferences and remote files: the cross-process config channel. */
     val hasRemoteChannel: Boolean get() = capabilities and CAP_REMOTE != 0L
 
     val hasApiProtection: Boolean get() = capabilities and RT_API_PROTECTION != 0L

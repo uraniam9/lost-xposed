@@ -47,7 +47,7 @@ class StoreConfigSourceTest {
 
     /**
      * File channels carry no type information, so every value arrives as a string. A setting
-     * that will not parse must behave as unconfigured rather than throw — this runs inside
+     * that will not parse must behave as unconfigured rather than throw: this runs inside
      * system_server, where a throw is a bootloop.
      */
     @Test
@@ -65,7 +65,7 @@ class StoreConfigSourceTest {
         assertTrue(sourceOf("core.displayprofiles|*|k" to "true").boolean("k", false))
         assertTrue(sourceOf("core.displayprofiles|*|k" to "TRUE").boolean("k", false))
         assertFalse(sourceOf("core.displayprofiles|*|k" to "False").boolean("k", true))
-        // Not "yes" — an unrecognised value is not silently read as true.
+        // Not "yes": an unrecognised value is not silently read as true.
         assertFalse(sourceOf("core.displayprofiles|*|k" to "yes").boolean("k", false))
         assertTrue(sourceOf("core.displayprofiles|*|k" to "yes").boolean("k", true))
     }
@@ -86,7 +86,7 @@ class StoreConfigSourceTest {
 
     @Test
     fun `isEmpty is false for a value set only on another package`() {
-        // The feature has work to do somewhere, just not here — that is a different thing
+        // The feature has work to do somewhere, just not here. That is a different thing
         // from being unconfigured, and the cheap skip must not swallow it.
         val store = MapConfigStore(mapOf("core.displayprofiles|com.other.app|densityDpi" to "560"))
         assertFalse(StoreConfigSource(store, feature, "com.example.app").isEmpty())

@@ -8,7 +8,7 @@ import android.os.SystemClock
  * Battery percentage for the clock suffix.
  *
  * Cached for thirty seconds. The clock repaints far more often than the battery meaningfully
- * changes, and this runs on SystemUI's UI thread — querying a system service on every repaint
+ * changes, and this runs on SystemUI's UI thread, where querying a system service on every repaint
  * would be a jank source for a value that moves once a minute at best.
  */
 object BatteryProvider {

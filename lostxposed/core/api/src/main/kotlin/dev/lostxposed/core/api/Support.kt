@@ -5,7 +5,7 @@ import io.github.libxposed.api.XposedInterface
 /*
  * `Support` used to live here: a sealed Ready/Degraded/Unsupported returned by a single
  * probe() call. It has been replaced by probe chains, which carry the same information with
- * the part that mattered — Outcome.Pass/Warn/Fail/Skip per check, so a report names the link
+ * the part that mattered: Outcome.Pass/Warn/Fail/Skip per check, so a report names the link
  * that broke instead of only the fact that something did. Degraded became Outcome.Warn.
  */
 
@@ -35,7 +35,7 @@ enum class Reason(val message: String, val benign: Boolean = false) {
 
 sealed interface InstallResult {
     /**
-     * Retaining handles is what makes disable() real rather than "reboot to apply" —
+     * Retaining handles is what makes disable() real rather than "reboot to apply";
      * `HookHandle.unhook()` was confirmed working on device (spike-01, Vector 2.2 / API 102).
      */
     data class Installed(val handles: List<XposedInterface.HookHandle>) : InstallResult

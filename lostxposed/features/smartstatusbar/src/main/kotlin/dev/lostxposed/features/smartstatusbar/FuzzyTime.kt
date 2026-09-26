@@ -6,7 +6,7 @@ import java.util.Calendar
  * Time as people say it out loud: "five past three", "twenty to nine", "half past two".
  *
  * Rounded to the nearest five minutes on purpose. "Twenty-three minutes past four" humanises
- * nothing — the point is that an approximate time reads at a glance, and precision is what an
+ * nothing. The point is that an approximate time reads at a glance, and precision is what an
  * ordinary clock already gives you.
  *
  * [compact] exists because the status bar is not a sentence. "twenty-five to four" is

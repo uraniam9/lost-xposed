@@ -11,7 +11,7 @@ import dev.lostxposed.features.textengine.TextEngineFeature
 
 /**
  * The single place features are registered. Adding a feature is one line here plus its own
- * Gradle module — nothing else in the spine changes.
+ * Gradle module. Nothing else in the spine changes.
  */
 object Features {
     val registry: FeatureRegistry = FeatureRegistry.build {

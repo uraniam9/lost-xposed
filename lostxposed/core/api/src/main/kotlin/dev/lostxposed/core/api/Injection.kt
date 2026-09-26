@@ -83,7 +83,7 @@ interface Injection {
     /*
      * There was an onHotReload(env) here. Nothing ever called it: the framework signals hot
      * reload on the MODULE, not per injection, and reacting properly would mean retaining
-     * every injection instance and its HookEnv for the life of the process — state the engine
+     * every injection instance and its HookEnv for the life of the process, state the engine
      * deliberately does not keep. An interface method with no caller is a promise the code
      * does not keep, so it is gone. The module-level signal is handled in the entry point.
      */
