@@ -14,7 +14,7 @@ import dev.lostxposed.entry.xposed.Features
  * attached, and asking someone to visit another screen and copy it by hand is how you get bug
  * reports made of screenshots and recollection instead.
  *
- * What this process *cannot* see — the inside of hooked processes — is stated as such, with
+ * What this process *cannot* see (the inside of hooked processes) is stated as such, with
  * the command that reveals it, rather than quietly omitted.
  */
 object Diagnostics {
@@ -70,12 +70,17 @@ object Diagnostics {
 
             // The two things a bug report is usually missing: which processes are actually
             // reading settings, and whether the boot guard has already turned something off.
-            val served = ServedPackages.read(context)
-            appendLine("READ SETTINGS AT LEAST ONCE")
+            val served = ServedPackages.thisBoot(context)
+            appendLine("READ SETTINGS THIS BOOT  (boots told apart by ${ServedPackages.method()})")
             if (served.isEmpty()) {
-                appendLine("  none yet — no hooked process has asked for settings")
+                appendLine("  none recorded")
             } else {
                 served.forEach { appendLine("  $it") }
+            }
+            val lapsed = ServedPackages.onlyBeforeThisBoot(context)
+            if (lapsed.isNotEmpty()) {
+                appendLine("READ IN AN EARLIER BOOT, NOT THIS ONE")
+                lapsed.forEach { appendLine("  $it") }
             }
             appendLine()
 
@@ -99,10 +104,11 @@ object Diagnostics {
             Features.registry.registrations.forEach { (d, _) ->
                 val status = FeatureStatus.of(d.id)
                 appendLine()
-                appendLine("  ${d.name}  [${d.id}]  — ${status.state.label}")
+                appendLine("  ${d.name}  [${d.id}]: ${status.state.label}")
                 appendLine("    ${d.category} · ${d.stability} · risk ${d.riskTier}")
                 appendLine("    targets ${d.injects.joinToString { it::class.simpleName ?: "?" }}")
-                appendLine("    ${d.restartHint} after a change")
+                appendLine("    after a change: ${d.restartHint}")
+                if (status.detail.isNotEmpty()) appendLine("    verified: ${status.detail}")
 
                 val configured = writer.entriesFor(d.id)
                 if (configured.isEmpty()) {
@@ -121,7 +127,8 @@ object Diagnostics {
             appendLine("              (force-stop silently does nothing to SystemUI)")
             appendLine("  an app      adb shell am force-stop <package>")
             appendLine("  keyboard    adb shell am force-stop <ime package>")
-            appendLine("  system_server features load only at boot")
+            appendLine("  system_server settings are handed over when saved; a new")
+            appendLine("              version of the module there still needs a reboot")
         }
     }
 }

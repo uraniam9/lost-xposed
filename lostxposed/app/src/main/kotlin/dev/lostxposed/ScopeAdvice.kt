@@ -16,7 +16,7 @@ import dev.lostxposed.entry.xposed.Features
  * resolved here, at runtime, where the answer exists.
  *
  * This is not cosmetic. A feature whose process is out of scope installs nothing and reports
- * nothing, which is indistinguishable from a feature that is broken — and several confusing
+ * nothing, which is indistinguishable from a feature that is broken, and several confusing
  * silences during development were exactly that.
  */
 object ScopeAdvice {
@@ -28,9 +28,11 @@ object ScopeAdvice {
         val detail: String,
         val features: List<String>,
         /**
-         * True when this package has actually read its settings through the provider.
+         * True when this package has read its settings through the provider since the phone
+         * last started. A read from before a reboot does not count, because SystemUI can come
+         * back from one without its settings.
          *
-         * Not "is in scope" — nothing can ask the framework that. This is the stronger
+         * Not "is in scope": nothing can ask the framework that. This is the stronger
          * fact: the module is loaded there and the settings channel works.
          */
         val confirmed: Boolean = false,
@@ -58,7 +60,7 @@ object ScopeAdvice {
             }
         }
 
-        val served = ServedPackages.read(context)
+        val served = ServedPackages.thisBoot(context)
         return order.map { key ->
             val entry = entryFor(key, context, byTarget.getValue(key).distinct())
             entry.copy(confirmed = entry.packageName != null && entry.packageName in served)
@@ -84,7 +86,7 @@ object ScopeAdvice {
         SYSTEM_UI -> Entry(
             packageName = SYSTEM_UI,
             label = "System UI",
-            detail = "Takes effect on the next SystemUI restart — no reboot needed.",
+            detail = "Takes effect on the next SystemUI restart. No reboot needed.",
             features = features,
         )
 
@@ -99,7 +101,7 @@ object ScopeAdvice {
             val ime = currentIme(context)
             Entry(
                 packageName = ime,
-                label = ime?.let { "Your keyboard — ${labelOf(context, it)}" } ?: "Your keyboard",
+                label = ime?.let { "Your keyboard (${labelOf(context, it)})" } ?: "Your keyboard",
                 detail = "Takes effect when the keyboard process restarts.",
                 features = features,
             )
