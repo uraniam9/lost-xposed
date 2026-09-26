@@ -1,6 +1,6 @@
 {
-  "version": "0.2.1-alpha",
-  "versionCode": 3,
-  "releaseUrl": "https://github.com/uraniam9/lost-xposed/releases/tag/v0.2.1-alpha",
+  "version": "0.2.2-beta",
+  "versionCode": 4,
+  "releaseUrl": "https://github.com/uraniam9/lost-xposed/releases/tag/v0.2.2-beta",
   "changelog": "https://github.com/uraniam9/lost-xposed/raw/main/CHANGELOG.md"
 }
