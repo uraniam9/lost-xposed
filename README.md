@@ -2,19 +2,19 @@
 
 [![Licence: GPL-3.0-or-later](https://img.shields.io/badge/licence-GPL--3.0--or--later-blue)](LICENSE)
 ![Android 13+](https://img.shields.io/badge/android-13%2B-3DDC84)
-![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
+![Status: beta](https://img.shields.io/badge/status-beta-blueviolet)
 
 The settings Android keeps to itself.
 
 Your phone can already do far more than its settings screen admits. Density is one value for
 every app. The clock is a clock. Notifications arrive or they do not, and "or they do not" is a
-per-app switch and nothing finer. None of that is a technical limit — it is a decision somebody
+per-app switch and nothing finer. None of that is a technical limit. It is a decision somebody
 made on your behalf.
 
 This reopens those decisions. A clock you compose yourself, out of the pieces you want, in the
 order you want them, at the size and weight you choose. Density, font scale and refresh rate
 per app instead of once for everything. Notification rules that read the text and stop a
-message before it is ever posted — which no notification listener can do, because by the time
+message before it is ever posted, which no notification listener can do, because by the time
 one sees a notification it has already arrived.
 
 Every line here was written for this project. Where an older module had an idea first it is
@@ -24,12 +24,12 @@ credited by name, with its licence, in [NOTICE](NOTICE); nothing is copied from 
 
 ## Read this before you install it
 
-**Everything here has been seen working on exactly one phone** — a Nothing AIN065 on
+**Everything here has been seen working on exactly one phone:** a Nothing AIN065 on
 Nothing OS 4, Android 16 (SDK 36), under Vector 2.2 with libxposed API 102. LSPosed itself is
 untested. So is every other device.
 
 The table below says which feature is which, and the state it reports is what somebody
-actually watched happen on a phone — not what the code is supposed to do.
+actually watched happen on a phone, not what the code is supposed to do.
 
 | Feature | What it does | State |
 |---|---|---|
@@ -53,8 +53,8 @@ accounted for several long, confusing silences where the answer was always "you 
 the box".
 
 The manifest suggests `com.android.systemui`, `android` and `io.github.uraniam9.lostxposed`. That list cannot
-be complete — which keyboard you use and which apps you want per-app display for are not
-knowable in advance — so the app's main screen lists the full set, resolved on your device,
+be complete (which keyboard you use and which apps you want per-app display for are not
+knowable in advance), so the app's main screen lists the full set, resolved on your device,
 with the features that need each entry and what has to restart afterwards.
 
 Things restart differently, and the app says which applies:
@@ -65,7 +65,7 @@ Things restart differently, and the app says which applies:
 
 **A device reboot is not reliably the same as a SystemUI restart.** On the one device this has
 been checked on, hooks were absent after a genuine reboot until Restart System UI was tapped
-once — scope stayed intact throughout, so this isn't a re-setup problem.
+once. Scope stayed intact throughout, so this isn't a re-setup problem.
 [Tracked as issue #1](https://github.com/uraniam9/lost-xposed/issues/1); until it's resolved,
 tap Restart System UI once after every boot.
 
@@ -88,7 +88,7 @@ keyPassword=...
 ```
 
 That file and `*.jks` are gitignored and must stay that way. Without them `assembleRelease`
-still succeeds and produces an unsigned apk that cannot be installed — it logs a warning
+still succeeds and produces an unsigned apk that cannot be installed. It logs a warning
 saying so, so you find out at build time instead of at install time.
 
 Back the keystore up somewhere you will still have in two years. Lose it and Android will
@@ -104,7 +104,7 @@ checking up on them.
 
 The app makes **one** network request: a GET of `update.json` on GitHub to see whether a newer
 version is out, only when you open it, cached for half a day, and switchable off. Nothing is
-sent with it — no identifier, no version, no device details.
+sent with it: no identifier, no version, no device details.
 
 It declares two permissions. `INTERNET`, for that. And one of its own, at signature level: the
 module's restart receiver runs inside SystemUI and has to be exported, so without that guard
@@ -127,7 +127,7 @@ registry and nothing else in the spine changes.
 
 The part worth reading, if you only read one, is how settings get from the app into a hooked
 process. Both channels the framework documents arrive empty on Vector 2.2, and reading the
-module's own file by path from SystemUI returns **ENOENT, not EACCES** — per-app mount
+module's own file by path from SystemUI returns **ENOENT, not EACCES**: per-app mount
 namespaces, which no file mode or SELinux label can do anything about. What works is a binder
 call to a ContentProvider, and making that work needed a Context built from the `LoadedApk`
 that `ActivityThread` already bound, because the system context is package `android` and the
@@ -146,7 +146,7 @@ fail-closed path, compatibility resolution and the settings key space.
 
 More of them, steadily. 62 things people used to be able to do with their phones got looked
 at while planning this project, and the ones still worth
-having get built one at a time — properly, with the compatibility work and the diagnostics,
+having get built one at a time, properly, with the compatibility work and the diagnostics,
 rather than as a pile of hooks that breaks on the next Android release.
 
 That is a lot of evenings, and nobody is funding it.

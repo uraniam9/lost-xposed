@@ -23,8 +23,8 @@ val signing = rootProject.file("keystore.properties").takeIf { it.exists() }?.le
  * drifted a whole release behind by the time anybody looked -- LSPosed said 0.1.0 while
  * the app said 0.2.0-alpha. So module.prop is generated below rather than committed.
  */
-val moduleVersionCode = 3
-val moduleVersionName = "0.2.1-alpha"
+val moduleVersionCode = 4
+val moduleVersionName = "0.2.2-beta"
 
 /*
  * module.prop is what the framework manager lists this as: the name in the module list, the
@@ -143,5 +143,7 @@ dependencies {
     // For the live clock preview: the settings screen renders with exactly the same
     // code the hook does, so a preview cannot be a polite fiction.
     implementation(project(":features:smartstatusbar"))
+    // For the feature id only, so its settings screen can special-case the live report.
+    implementation(project(":features:powerinspector"))
     compileOnly(libs.libxposed.api)
 }
