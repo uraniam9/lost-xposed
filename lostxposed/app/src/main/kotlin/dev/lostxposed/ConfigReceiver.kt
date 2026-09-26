@@ -14,7 +14,7 @@ import dev.lostxposed.features.displayprofiles.DisplayProfilesFeature
 /**
  * Configuration from adb, until the settings UI exists.
  *
- *     # generic — works for every feature
+ *     # generic: works for every feature
  *     am broadcast -p dev.lostxposed -a dev.lostxposed.config.SET \
  *         --es feature core.smartstatusbar --es key style --es value fuzzy
  *     am broadcast -p dev.lostxposed -a dev.lostxposed.config.SET \
@@ -52,6 +52,12 @@ class ConfigReceiver : BroadcastReceiver() {
 
             ACTION_CLEAR -> clear(writer, intent, target)
             ACTION_DUMP -> dump(writer)
+
+            // Opening the writer above rewrote the device-protected copy, which is the whole
+            // point. Without this, the first reboot after an update would have no copy for
+            // SystemUI to read before unlock.
+            Intent.ACTION_MY_PACKAGE_REPLACED ->
+                Log.i(TAG, "updated, settings copy refreshed for the next boot")
         }
     }
 
@@ -105,7 +111,7 @@ class ConfigReceiver : BroadcastReceiver() {
         }
 
         if (applied.isEmpty()) {
-            Log.w(TAG, "SET with nothing to set — pass --ei dpi / --ef font / --ef refresh")
+            Log.w(TAG, "SET with nothing to set; pass --ei dpi / --ef font / --ef refresh")
         } else {
             Log.i(TAG, "$target <- ${applied.joinToString(", ")} (restart $target to apply)")
         }

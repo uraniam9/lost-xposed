@@ -9,16 +9,21 @@ import java.io.File
  * The UI-process half. Writes the same flat key space that [ConfigLoader] reads.
  *
  * Hooked processes read config at process start, so a write here takes effect the next time
- * the target app starts — which is why the UI must say so rather than implying it is live.
+ * the target app starts, which is why the UI must say so rather than implying it is live.
  */
 class ConfigWriter(
     private val prefs: SharedPreferences,
     /** The backing file, so it can be made readable by the framework daemon. */
     private val file: File? = null,
-    /** The module's files dir, which is what listRemoteFiles()/openRemoteFile() serve. */
+    /**
+     * Where the snapshot goes: the device-protected files dir, which exists before the first
+     * unlock, so the provider can serve it to SystemUI at boot.
+     */
     private val filesDir: File? = null,
     /** The app's root data dir, which is 0700 at install and blocks every path below it. */
     private val dataDir: File? = null,
+    /** The same for device-protected storage, which the snapshot sits under. */
+    private val protectedDataDir: File? = null,
 ) {
 
     init {
@@ -38,16 +43,17 @@ class ConfigWriter(
     }
 
     /**
-     * Mirror the whole config into the module's own files dir, in [Snapshot]'s format.
+     * Mirror the whole config into device-protected storage, in [Snapshot]'s format.
      *
-     * This file feeds the two channels that are not shared_prefs: the framework serves it
-     * through `listRemoteFiles()` / `openRemoteFile()`, and a hooked process permitted to read
-     * it can open it by path with no framework involvement at all.
+     * The provider serves this copy before the first unlock. SystemUI starts before then, and
+     * Android refuses to open the app's preferences until the phone has been unlocked once. A
+     * process permitted to read the file can also open it by path, no framework involved.
      *
      * Measured on Vector 2.2 with the module self-scoped and MODE_WORLD_READABLE accepted:
      * `getRemotePreferences()` returns an empty object in hooked processes, and writing this
      * file did **not** make `listRemoteFiles()` non-empty either. So it is written for the
-     * direct read, and the two framework channels are still probed in case a build fixes them.
+     * provider and the direct read, and the two framework channels are still probed in case a
+     * build fixes them.
      */
     private fun snapshot() {
         val dir = filesDir ?: return
@@ -56,6 +62,7 @@ class ConfigWriter(
             out.writeText(Snapshot.format(prefs.all))
             out.setReadable(true, false)
             dir.setExecutable(true, false)
+            protectedDataDir?.setExecutable(true, false)
             lastSnapshot = "${out.length()} bytes at ${out.path}"
         }.onFailure { lastSnapshot = "${it.javaClass.simpleName}: ${it.message}" }
     }
@@ -128,7 +135,7 @@ class ConfigWriter(
      * Make the file readable by the framework daemon.
      *
      * Measured on Nothing OS / Android 16 with Vector 2.2: `vectord` runs as **system**,
-     * while SharedPreferences writes the file 0660 owned by the app's own uid — so the
+     * while SharedPreferences writes the file 0660 owned by the app's own uid, so the
      * daemon serving `getRemotePreferences()` cannot open it, and every hooked process reads
      * an empty set with no error anywhere. MODE_WORLD_READABLE was accepted without throwing
      * and did not change the mode.
@@ -157,7 +164,7 @@ class ConfigWriter(
 
     companion object {
         /**
-         * Which mode the open CALL accepted — not proof the mode was applied.
+         * Which mode the open CALL accepted, not proof the mode was applied.
          *
          * Measured on Nothing OS / Android 16: MODE_WORLD_READABLE was accepted without
          * throwing, yet the file on disk stayed 0660. So this value says only that the call
@@ -199,7 +206,7 @@ class ConfigWriter(
          * MODE_PRIVATE, then chmod. Deliberately NOT MODE_WORLD_READABLE.
          *
          * Measured on Nothing OS / Android 16: `getSharedPreferences(.., MODE_WORLD_READABLE)`
-         * neither threw nor produced a world-readable file — and worse, writes through the
+         * neither threw nor produced a world-readable file, and worse, writes through the
          * returned instance were silently dropped. The receiver logged a successful write
          * while the file on disk never changed size or mtime.
          *
@@ -211,8 +218,8 @@ class ConfigWriter(
         fun open(context: Context): ConfigWriter {
             // MODE_WORLD_READABLE first: LSPosed-family frameworks intercept this call inside
             // a self-scoped module's process and register the file for remote access. It only
-            // works when the module is injected here, which is why an earlier test of it —
-            // run while the module was NOT self-scoped — dropped writes and looked broken.
+            // works when the module is injected here, which is why an earlier test of it
+            // (run while the module was NOT self-scoped) dropped writes and looked broken.
             val prefs = runCatching {
                 context.getSharedPreferences(ConfigSchema.PREFS_NAME, Context.MODE_WORLD_READABLE)
                     .also { lastMode = "MODE_WORLD_READABLE" }
@@ -225,12 +232,33 @@ class ConfigWriter(
                 File(File(context.dataDir, "shared_prefs"), "${ConfigSchema.PREFS_NAME}.xml")
             }.getOrNull()
 
+            // The copy used to sit in normal storage, which is still locked when SystemUI
+            // starts. One left behind there would just be another file that can disagree.
+            runCatching { File(context.filesDir, ConfigSchema.SNAPSHOT_NAME).delete() }
+            val deviceProtected =
+                runCatching { context.createDeviceProtectedStorageContext() }.getOrNull()
+
             return ConfigWriter(
                 prefs = prefs,
                 file = file,
-                filesDir = runCatching { context.filesDir }.getOrNull(),
+                filesDir = runCatching { deviceProtected?.filesDir }.getOrNull(),
                 dataDir = runCatching { context.dataDir }.getOrNull(),
+                protectedDataDir = runCatching { deviceProtected?.dataDir }.getOrNull(),
             ).also { it.republish() }
         }
+
+        /**
+         * The settings as of the last write, readable before the first unlock.
+         *
+         * Null when there is no copy yet. The provider then declines instead of serving an
+         * empty set, which would look like a working channel with nothing configured.
+         */
+        fun beforeUnlock(context: Context): Map<String, String>? = runCatching {
+            File(context.createDeviceProtectedStorageContext().filesDir, ConfigSchema.SNAPSHOT_NAME)
+                .takeIf { it.exists() }
+                ?.readText()
+                ?.let(Snapshot::parse)
+                ?.takeIf { it.isNotEmpty() }
+        }.getOrNull()
     }
 }

@@ -61,6 +61,8 @@
                 <action android:name="dev.lostxposed.config.SET" />
                 <action android:name="dev.lostxposed.config.CLEAR" />
                 <action android:name="dev.lostxposed.config.DUMP" />
+                <!-- After an update, so the copy read before unlock is fresh for the next boot. -->
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
@@ -68,10 +70,15 @@
             Exported because the readers are SystemUI, keyboards and ordinary apps, which do
             not share this module's signature. The provider identifies callers by uid and
             serves each only the settings that apply to it. See ConfigContentProvider.
+
+            Direct Boot aware because SystemUI starts before the first unlock. Without it,
+            Android hides the provider until then, SystemUI's one attempt at boot gets
+            "Unknown authority", and the clock stays plain until SystemUI is restarted.
         -->
         <provider
             android:name=".ConfigContentProvider"
             android:authorities="io.github.uraniam9.lostxposed.config"
+            android:directBootAware="true"
             android:exported="true" />
 
         <meta-data

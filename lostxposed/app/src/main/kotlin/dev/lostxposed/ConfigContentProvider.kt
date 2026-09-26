@@ -6,6 +6,8 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
+import android.os.Process
+import android.os.UserManager
 import android.util.Log
 import dev.lostxposed.core.config.ConfigContract
 import dev.lostxposed.core.config.ConfigWriter
@@ -15,18 +17,24 @@ import dev.lostxposed.core.config.ConfigWriter
  *
  * This exists because nothing else works. Measured on this device: both framework channels
  * arrive empty in a hooked process, and reading the snapshot by path gets ENOENT even with
- * the whole directory path open and the file present — an app process's mount namespace does
+ * the whole directory path open and the file present: an app process's mount namespace does
  * not contain another app's data dir, so no permission or label can fix it. Binder is not
  * subject to either constraint.
  *
  * **Exported deliberately, and filtered because of it.** The readers are SystemUI, keyboards
  * and ordinary apps; none share this module's signature, so a signature-level permission
  * would lock out exactly the callers that need it. Instead the caller is identified from its
- * uid — which it cannot forge, unlike anything it passes as an argument — and served only the
+ * uid (which it cannot forge, unlike anything it passes as an argument) and served only the
  * settings that apply to it.
  *
  * Read-only. Writes arrive through the settings UI and [ConfigReceiver], both of which are
  * this app's own processes, so there is no reason to expose a mutation path at all.
+ *
+ * **Answers before the first unlock.** SystemUI starts while the phone is still locked and
+ * asks once. Measured on a Nothing Phone (2): without Direct Boot the lookup failed with
+ * `Unknown authority` while the phone was locked, and the clock stayed plain until SystemUI
+ * was restarted by hand. Before unlock the preferences cannot be opened, so what gets
+ * served then is the copy [ConfigWriter] keeps in device-protected storage.
  */
 class ConfigContentProvider : ContentProvider() {
 
@@ -49,16 +57,39 @@ class ConfigContentProvider : ContentProvider() {
         }
 
         if (method != ConfigContract.METHOD_READ) return null
-        val packages = runCatching { context.packageManager.getPackagesForUid(uid) }
-            .getOrNull().orEmpty().toSet()
+        // uid 1000 is shared by a dozen system packages. The one that asks is system_server,
+        // and "android" is what the scope list calls it; the whole dozen would only be noise
+        // on the status card.
+        val packages = if (uid == Process.SYSTEM_UID) {
+            setOf(SYSTEM_SERVER)
+        } else {
+            runCatching { context.packageManager.getPackagesForUid(uid) }
+                .getOrNull().orEmpty().toSet()
+        }
+
+        // No copy yet means nothing to serve, and saying so beats an empty answer that
+        // looks like a working channel.
+        val unlocked = context.getSystemService(UserManager::class.java)?.isUserUnlocked != false
+        val all = if (unlocked) {
+            ConfigWriter.open(context).values()
+        } else {
+            ConfigWriter.beforeUnlock(context) ?: run {
+                Log.w(TAG, "uid $uid asked before the first unlock, with no copy to serve yet")
+                return null
+            }
+        }
 
         val visible = ConfigContract.visibleTo(
-            all = ConfigWriter.open(context).values(),
+            all = all,
             packages = packages,
             privileged = uid < ConfigContract.FIRST_APPLICATION_UID,
         )
 
-        Log.i(TAG, "served ${visible.size} settings to uid $uid ${packages.joinToString()}")
+        Log.i(
+            TAG,
+            "served ${visible.size} settings to uid $uid ${packages.joinToString()}" +
+                if (unlocked) "" else " before the first unlock",
+        )
         ServedPackages.record(context, packages)
         lastServed = Served(
             packages = packages.ifEmpty { setOf("uid $uid") },
@@ -95,6 +126,9 @@ class ConfigContentProvider : ContentProvider() {
 
     companion object {
         private const val TAG = "LostXposed"
+
+        /** system_server's package name, as the framework manager lists it. */
+        private const val SYSTEM_SERVER = "android"
 
         /**
          * Proof of delivery, for the UI to show.

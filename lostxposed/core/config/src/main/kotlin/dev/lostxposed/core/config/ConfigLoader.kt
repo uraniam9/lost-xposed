@@ -22,17 +22,17 @@ sealed interface ConfigLoad {
  * Four exist, and which of them works is a property of the platform and framework build
  * rather than of this module, so all four are probed and the first one holding anything wins:
  *
- *  1. **provider** — a binder call to the settings app's ContentProvider.
- *  2. **remote prefs** — `getRemotePreferences()`, the documented channel.
- *  3. **remote file** — `openRemoteFile()`, the documented file channel, served by the
+ *  1. **provider**: a binder call to the settings app's ContentProvider.
+ *  2. **remote prefs**: `getRemotePreferences()`, the documented channel.
+ *  3. **remote file**: `openRemoteFile()`, the documented file channel, served by the
  *     framework daemon out of the module's own files dir.
- *  4. **direct file** — the same file opened by path, with no framework involvement at all.
+ *  4. **direct file**: the same file opened by path, with no framework involvement at all.
  *
  * Measured on Nothing OS / Android 16 with Vector 2.2, module self-scoped and
  * `PROP_CAP_REMOTE` granted:
  *
  * - Channels 2 and 3 arrive empty in every hooked process, while the settings app reads its
- *   own settings back correctly — so the write side works and the framework read side does
+ *   own settings back correctly, so the write side works and the framework read side does
  *   not. Channel 3 reports `Cannot open remote file`, meaning the daemon declines to serve a
  *   file that exists rather than failing to find one.
  * - Channel 4 gets **ENOENT** in SystemUI with the entire directory path opened and the file
@@ -96,7 +96,7 @@ object ConfigLoader {
         report = "channel=${chosen?.first ?: "none"} ${outcomes.joinToString(" ")}"
 
         if (chosen == null) {
-            return ConfigLoad.Unavailable("no channel delivered any settings — ${outcomes.joinToString(" ")}")
+            return ConfigLoad.Unavailable("no channel delivered any settings: ${outcomes.joinToString(" ")}")
         }
 
         val (name, store) = chosen
@@ -122,7 +122,10 @@ object ConfigLoader {
      * User 0 only. A work-profile clone of the module would have its own data dir, but the
      * framework loads one module instance and the settings UI lives in the primary user, so
      * that is the file every process should be looking at.
+     *
+     * Device-protected storage, so the file is there before the first unlock, which is when
+     * system_server and SystemUI start.
      */
     private const val SNAPSHOT_PATH =
-        "/data/user/0/io.github.uraniam9.lostxposed/files/${ConfigSchema.SNAPSHOT_NAME}"
+        "/data/user_de/0/io.github.uraniam9.lostxposed/files/${ConfigSchema.SNAPSHOT_NAME}"
 }
