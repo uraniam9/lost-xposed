@@ -36,11 +36,11 @@ actually watched happen on a phone, not what the code is supposed to do.
 | Clock Studio | A status bar clock you compose: mix time, fuzzy time, date, day and battery, then set size, colour, weight and font | working |
 | Self check | Reports whether the module is loaded in a given process | working |
 | No-op reference | Counts clock repaints and changes nothing. Proves the engine and `unhook()` | working |
-| Notification rules | Block per app, or by keyword, before the notification is posted | partly tested |
-| Hardware keys | Volume keys skip tracks while the screen is off | partly tested |
-| Power inspector | Counts wakelock and alarm requests per app. Read-only | partly tested |
-| Per-app display | Density, font scale and refresh rate per app, with presets that scale to your device | untested |
-| Text engine | Two-finger cursor and selection gestures, any keyboard, any app | untested |
+| Notification rules | Block per app, or by keyword, before the notification is posted | working |
+| Hardware keys | Volume keys skip tracks while the screen is off | working |
+| Power inspector | Counts wakelock and alarm requests per app. Read-only | working |
+| Per-app display | Density, font scale and refresh rate per app, with presets that scale to your device | partly tested |
+| Text engine | Two-finger cursor and selection gestures, any keyboard, any app | partly tested |
 
 Not built yet: clipboard history, AppOps and spoof profiles (wants a Shizuku backend), and the
 motion stabiliser, which is still a measurement spike rather than a feature.
