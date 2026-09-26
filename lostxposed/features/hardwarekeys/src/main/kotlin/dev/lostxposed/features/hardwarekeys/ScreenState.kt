@@ -2,6 +2,7 @@ package dev.lostxposed.features.hardwarekeys
 
 import android.content.Context
 import android.media.AudioManager
+import android.os.PowerManager
 import android.view.KeyEvent
 
 /**
@@ -9,7 +10,7 @@ import android.view.KeyEvent
  * PowerManager.
  *
  * `interceptKeyBeforeQueueing` runs on the input hot path, before any Context is convenient,
- * and querying a system service per keystroke would be both slow and circular — the policy is
+ * and querying a system service per keystroke would be both slow and circular: the policy is
  * part of what decides interactivity in the first place.
  */
 object ScreenState {
@@ -25,6 +26,17 @@ object ScreenState {
     fun markAwake() {
         interactive = true
     }
+
+    /**
+     * Asked once, when the hooks go in. They go in after the boot now, once settings arrive,
+     * and the callbacks only report changes: with the screen already off, keys would not be
+     * taken until it had been on and off again.
+     */
+    fun sync() {
+        runCatching {
+            SystemContext.get()?.getSystemService(PowerManager::class.java)?.isInteractive
+        }.getOrNull()?.let { interactive = it }
+    }
 }
 
 object MediaControl {
@@ -34,7 +46,7 @@ object MediaControl {
 
     /**
      * Only true when something is actually playing. Without this check, a volume press on a
-     * silent phone would be swallowed instead of changing the volume — turning a convenience
+     * silent phone would be swallowed instead of changing the volume, turning a convenience
      * into a broken volume rocker.
      */
     fun isPlaying(): Boolean = runCatching { manager()?.isMusicActive == true }.getOrDefault(false)
@@ -49,13 +61,17 @@ object MediaControl {
 
     private fun manager(): AudioManager? {
         audio?.let { return it }
-        val context = runCatching {
-            Class.forName("android.app.ActivityThread")
-                .getMethod("currentApplication")
-                .invoke(null) as? Context
-        }.getOrNull() ?: return null
-        return runCatching { context.getSystemService(AudioManager::class.java) }
+        return runCatching { SystemContext.get()?.getSystemService(AudioManager::class.java) }
             .getOrNull()
             ?.also { audio = it }
     }
+}
+
+/** system_server's own Context, the one its ActivityThread was started with. */
+internal object SystemContext {
+    fun get(): Context? = runCatching {
+        Class.forName("android.app.ActivityThread")
+            .getMethod("currentApplication")
+            .invoke(null) as? Context
+    }.getOrNull()
 }
