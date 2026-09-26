@@ -31,21 +31,8 @@ class AboutActivity : Activity() {
             )
             addView(tagline())
 
-            addView(Ui.heading(this@AboutActivity, "Why this exists"))
-            WHY.forEach { addView(Ui.prose(this@AboutActivity, it)) }
-
-            addView(Ui.heading(this@AboutActivity, "How it behaves"))
-            BEHAVIOUR.forEach { addView(Ui.prose(this@AboutActivity, it)) }
-
-            addView(Ui.heading(this@AboutActivity, "What works right now"))
-            addView(statusCard())
-
-            addView(Ui.heading(this@AboutActivity, "Will it work on your phone"))
-            COMPATIBILITY.forEach { addView(Ui.prose(this@AboutActivity, it)) }
-
-            addView(Ui.heading(this@AboutActivity, "Where this is going"))
-            ROADMAP.forEach { addView(Ui.prose(this@AboutActivity, it)) }
-
+            // First, not last. This used to sit under four headings of prose, which meant
+            // reaching "how do I report a bug" took a long scroll past everything else.
             addView(Ui.heading(this@AboutActivity, "Say something"))
             addView(
                 Ui.linkRow(
@@ -82,6 +69,40 @@ class AboutActivity : Activity() {
                 )
             }
 
+            // Collapsed, not five headings of always-open prose. The answers did not get any
+            // shorter; only one of them is on screen at a time now, by your own choice.
+            addView(Ui.heading(this@AboutActivity, "Questions"))
+            addView(
+                Ui.expandable(this@AboutActivity, "Why does this exist?") {
+                    WHY.forEach { addView(Ui.prose(this@AboutActivity, it)) }
+                },
+            )
+            addView(
+                Ui.expandable(this@AboutActivity, "How does it behave?") {
+                    BEHAVIOUR.forEach { addView(Ui.prose(this@AboutActivity, it)) }
+                },
+            )
+            addView(
+                Ui.expandable(this@AboutActivity, "What actually works right now?") {
+                    addView(statusCard())
+                },
+            )
+            addView(
+                Ui.expandable(this@AboutActivity, "Will it work on my phone?") {
+                    COMPATIBILITY.forEach { addView(Ui.prose(this@AboutActivity, it)) }
+                },
+            )
+            addView(
+                Ui.expandable(this@AboutActivity, "Where is this going?") {
+                    ROADMAP.forEach { addView(Ui.prose(this@AboutActivity, it)) }
+                },
+            )
+            addView(
+                Ui.expandable(this@AboutActivity, "What's the licence?") {
+                    addView(Ui.prose(this@AboutActivity, LICENCE))
+                },
+            )
+
             val work = Links.visibleWork()
             if (work.isNotEmpty()) {
                 addView(Ui.heading(this@AboutActivity, "The other things I build"))
@@ -96,9 +117,6 @@ class AboutActivity : Activity() {
                     )
                 }
             }
-
-            addView(Ui.heading(this@AboutActivity, "Licence"))
-            addView(Ui.prose(this@AboutActivity, LICENCE))
 
             addView(Ui.spacer(this@AboutActivity, 32))
         }
@@ -187,7 +205,7 @@ class AboutActivity : Activity() {
     private fun reportBug() {
         Links.BUG?.let { return open(it) }
         compose(
-            subject = "Lost Xposed bug — ${Diagnostics.header(this)}",
+            subject = "Lost Xposed bug: ${Diagnostics.header(this)}",
             body = buildString {
                 appendLine("What happened:")
                 appendLine()
@@ -238,13 +256,13 @@ class AboutActivity : Activity() {
             "Your phone can already do far more than its settings screen admits. The density " +
                 "is fixed at one value for every app. The clock is a clock. Notifications " +
                 "arrive or they do not, and \"or they do not\" is a per-app switch and " +
-                "nothing finer. None of that is a technical limit — it is a decision " +
+                "nothing finer. None of that is a technical limit. It is a decision " +
                 "somebody made on your behalf.",
             "Lost Xposed reopens those decisions. A clock you compose yourself out of the " +
                 "pieces you want, in the order you want them, at the size and weight you " +
                 "choose. Density, font scale and refresh rate set per app rather than once " +
                 "for everything. Notification rules that read the text and stop a message " +
-                "before it is ever posted — something no notification listener can do, " +
+                "before it is ever posted, something no notification listener can do, " +
                 "because by the time it sees one it has already arrived.",
             "The bar for adding something is simple. It has to do what Android still will " +
                 "not do for you, and it has to be worth running code inside your system " +
@@ -256,13 +274,13 @@ class AboutActivity : Activity() {
             "A feature that could put your phone in a bootloop is disabled before the boot " +
                 "that would prove it, not after. If the guard cannot even write its own " +
                 "marker it disables the feature rather than run unprotected.",
-            "When something does not work it names the step — the class is there, the " +
+            "When something does not work it names the step: the class is there, the " +
                 "method is missing. Silence is the failure mode that costs days, so nothing " +
                 "here is allowed to fail quietly. That is also why a feature not yet proven on a " +
                 "phone says so on its own card instead of claiming otherwise.",
             "Exactly one network request exists in this app: a GET of a static file on " +
                 "GitHub, to see whether a newer version is out. Only when you open the app, " +
-                "cached for half a day, and switchable off. Nothing is sent with it — no " +
+                "cached for half a day, and switchable off. Nothing is sent with it: no " +
                 "identifier, no version, no device details.",
             "Beyond that nothing leaves the phone. Settings go to hooked apps over a local " +
                 "binder call, and each caller is identified by its uid and given only the " +
@@ -270,7 +288,7 @@ class AboutActivity : Activity() {
                 "filter notifications on. Nothing here intercepts anyone else's messages, " +
                 "defeats payments or DRM, or collects anything about you.",
             "Every line was written for this project. Where an older module had the idea " +
-                "first it is credited by name in NOTICE, with its licence — but nothing " +
+                "first it is credited by name in NOTICE, with its licence, but nothing " +
                 "is copied from one, including the ones whose licences would now allow it.",
         )
 
@@ -292,21 +310,21 @@ class AboutActivity : Activity() {
                 "and says why in Diagnostics instead of hooking something that might not be " +
                 "what it expects.",
             "So the answer is: it tells you. A feature that cannot work on your phone says " +
-                "so, by name, rather than failing quietly — and the ones marked untested " +
+                "so, by name, rather than failing quietly, and the ones marked \"needs testing\" " +
                 "have not been tried anywhere but a single Nothing phone.",
         )
 
         val ROADMAP = listOf(
             "Slowly, more of them. The survey behind this project lists 62 modules worth " +
-                "remembering, and the intention is to keep bringing them back one at a time " +
-                "— properly, with the compatibility work and the diagnostics, not as a " +
+                "remembering, and the intention is to keep bringing them back one at a time, " +
+                "properly, with the compatibility work and the diagnostics, not as a " +
                 "pile of hooks that breaks on the next Android release.",
             "That is a lot of evenings, and this is not a hobby anybody is funding. A coffee " +
                 "is a real help and an honest signal about which features people actually " +
                 "want.",
             "Supporters get the build before everyone else, a say in what gets built next, " +
                 "and can ask me directly when something does not work. Feature requests from " +
-                "supporters go to the top of the list — not because everyone else is " +
+                "supporters go to the top of the list, not because everyone else is " +
                 "ignored, but because somebody paying for this to continue has earned a say " +
                 "in where it goes.",
             "It is not a paywall and it could not be one. The source is public and the " +
@@ -324,7 +342,7 @@ class AboutActivity : Activity() {
         val LICENCE =
             "Lost Xposed is free software under the GNU General Public License, version 3 or " +
                 "later. You may read it, change it and share it; anything you build on it has " +
-                "to stay free the same way. That is deliberate — this is code that hooks " +
+                "to stay free the same way. That is deliberate: this is code that hooks " +
                 "system_server and reads notifications, and nobody should have to trust a " +
                 "binary they cannot audit.\n\n" +
                 "It builds on libxposed (Apache-2.0) and runs under LSPosed or Vector, which " +
@@ -333,7 +351,14 @@ class AboutActivity : Activity() {
     }
 }
 
-/** Release stage, in one place so the badge and the version string cannot disagree. */
+/**
+ * Release stage, in one place so the badge and the version string cannot disagree.
+ *
+ * Moved from alpha at 0.2.2 (2026-09-26): every user-facing feature has by then been seen
+ * doing its job on a device, not merely installing. Per-app display and Text engine are the
+ * exceptions, and each says so on its own card rather than the app-wide badge trying to carry
+ * that nuance.
+ */
 object Release {
-    const val STAGE = "alpha"
+    const val STAGE = "beta"
 }

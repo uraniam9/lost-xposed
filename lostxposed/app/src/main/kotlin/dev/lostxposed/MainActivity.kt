@@ -2,8 +2,10 @@ package dev.lostxposed
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -21,7 +23,7 @@ import dev.lostxposed.ui.Ui
  * The dashboard.
  *
  * It reports only what this process can actually see. It cannot look inside hooked processes
- * — that is a property of the architecture, not a gap — so anything it cannot verify is
+ * (a property of the architecture, not a gap), so anything it cannot verify is
  * stated as unknown rather than assumed good. The one exception is the settings provider: a
  * hooked process reading through it leaves a record here, and that record is real evidence.
  */
@@ -115,30 +117,33 @@ class MainActivity : Activity() {
             addView(Ui.heading(this@MainActivity, "Required scope"))
             addView(scopeCard())
 
-            // Working first, then partly tested, then untested. Somebody opening this
-            // should meet something that works before they meet a list of caveats.
             val (features, scaffolding) = Features.registry.registrations
                 .map { it.descriptor }
                 .partition { it.userFacing }
 
             addView(Ui.heading(this@MainActivity, "Features"))
             features
-                .sortedBy { FeatureStatus.of(it.id).state.ordinal }
+                .sortedBy { d -> CARD_ORDER.indexOf(d.id.value).let { if (it < 0) CARD_ORDER.size else it } }
                 .forEach { addView(featureCard(it)) }
 
+            // Collapsed: these are proof the engine works, not something to act on, and
+            // sitting open on the main screen gave equal weight to a self-test and a feature.
             if (scaffolding.isNotEmpty()) {
-                addView(Ui.heading(this@MainActivity, "Built-in checks"))
                 addView(
-                    Ui.caption(
-                        this@MainActivity,
-                        "Not features. These exist to prove the engine is working — that " +
-                            "the module is loaded where it should be, and that a hook can be " +
-                            "installed and removed again without a reboot. They change " +
-                            "nothing on your phone.",
-                    ),
+                    Ui.expandable(this@MainActivity, "Built-in checks") {
+                        addView(
+                            Ui.caption(
+                                this@MainActivity,
+                                "Not features. These exist to prove the engine is working: " +
+                                    "that the module is loaded where it should be, and that a " +
+                                    "hook can be installed and removed again without a " +
+                                    "reboot. They change nothing on your phone.",
+                            ),
+                        )
+                        addView(Ui.spacer(this@MainActivity, 8))
+                        scaffolding.forEach { addView(featureCard(it)) }
+                    },
                 )
-                addView(Ui.spacer(this@MainActivity, 8))
-                scaffolding.forEach { addView(featureCard(it)) }
             }
 
             addView(Ui.heading(this@MainActivity, "More"))
@@ -172,6 +177,14 @@ class MainActivity : Activity() {
                         },
                 ),
             )
+
+            // The true footer, below even the device line. Its own card rather than loose
+            // text in the page's own padding, so it carries the same weight as every other
+            // section here instead of reading like an afterthought nobody finished styling.
+            addView(Ui.spacer(this@MainActivity, 12))
+            addView(Ui.heading(this@MainActivity, "Author"))
+            addView(authorCard())
+
             addView(Ui.spacer(this@MainActivity, 32))
         }
 
@@ -189,7 +202,7 @@ class MainActivity : Activity() {
                 RestartControl.restart(this, RestartControl.SYSTEM_UI)
                 Toast.makeText(
                     this,
-                    "Asked System UI to restart — the screen may flash a few times before it settles.",
+                    "Asked System UI to restart. The screen may flash a few times before it settles.",
                     Toast.LENGTH_LONG,
                 ).show()
             }
@@ -225,8 +238,8 @@ class MainActivity : Activity() {
                 Ui.caption(
                     this@MainActivity,
                     "They will stay off until you clear this. Only features that run inside " +
-                        "system_server can stop a boot, so those are the only ones disabled — " +
-                        "turning off the rest would be theatre.",
+                        "system_server can stop a boot, so those are the only ones disabled. " +
+                        "Turning off the rest would be theatre.",
                 ),
             )
             addView(
@@ -255,7 +268,7 @@ class MainActivity : Activity() {
             putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(Links.CONTACT_EMAIL))
             putExtra(
                 android.content.Intent.EXTRA_SUBJECT,
-                "Lost Xposed boot failure — ${Diagnostics.header(this@MainActivity)}",
+                "Lost Xposed boot failure: ${Diagnostics.header(this@MainActivity)}",
             )
             putExtra(
                 android.content.Intent.EXTRA_TEXT,
@@ -284,11 +297,27 @@ class MainActivity : Activity() {
      * Whether the module is loaded *here* only says it is scoped to itself. Whether a hooked
      * process has actually read its settings is what people care about, and until one has,
      * this says so rather than implying otherwise.
+     *
+     * The evidence is [ServedPackages], counted for this boot only. It is on disk, so it
+     * outlives Android killing this app in the background, which happens all the time and
+     * says nothing about SystemUI. It does not outlive a reboot. SystemUI can come back from
+     * one without its settings, and a read carried over from the boot before turned this card
+     * green above a plain clock. [ConfigContentProvider.lastServed] adds the exact time and
+     * count for as long as this app's process lasts.
+     *
+     * This app reading its own settings is left out. It is not one of the hooked apps the
+     * headline is talking about.
      */
     private fun statusCard(active: Boolean): LinearLayout {
-        val served = ConfigContentProvider.lastServed
+        val own = packageName
+        val last = ConfigContentProvider.lastServed
+            ?.let { it.copy(packages = it.packages - own) }
+            ?.takeIf { it.packages.isNotEmpty() }
+        val thisBoot = ServedPackages.thisBoot(this) - own
+        val reaching = last != null || thisBoot.isNotEmpty()
+        val lapsed = if (reaching) emptySet() else ServedPackages.onlyBeforeThisBoot(this) - own
         val colour = when {
-            served != null -> Ui.ok(this)
+            reaching -> Ui.ok(this)
             active -> Ui.warn(this)
             else -> Ui.danger(this)
         }
@@ -298,8 +327,10 @@ class MainActivity : Activity() {
                 Ui.body(
                     this@MainActivity,
                     when {
-                        served != null -> "Settings are reaching hooked apps"
-                        active -> "Module loaded — nothing has read settings yet"
+                        reaching -> "Settings are reaching hooked apps"
+                        active && lapsed.isNotEmpty() ->
+                            "Nothing has read settings since the reboot"
+                        active -> "Module loaded, but nothing has read settings yet"
                         else -> "Module is not loaded in this app"
                     },
                     colour,
@@ -310,14 +341,27 @@ class MainActivity : Activity() {
                 Ui.caption(
                     this@MainActivity,
                     when {
-                        served != null ->
-                            "Last read by ${served.packages.joinToString()} " +
-                                "${ago(served.atMillis)} — ${served.keys} settings."
+                        last != null ->
+                            "Last read by ${last.packages.joinToString()} " +
+                                "${ago(last.atMillis)} (${last.keys} settings)."
+
+                        reaching ->
+                            "Read by ${thisBoot.joinToString()} since the phone started. " +
+                                "Android has restarted this app since then, which it does on " +
+                                "its own, so the exact time and count are gone."
+
+                        active && RestartControl.SYSTEM_UI in lapsed ->
+                            "Read by ${lapsed.joinToString()} before the phone restarted, but " +
+                                "not since. The Restart System UI button makes it ask again."
+
+                        active && lapsed.isNotEmpty() ->
+                            "Read by ${lapsed.joinToString()} before the phone restarted. Each " +
+                                "one asks again the next time it starts."
 
                         active ->
                             "The module is running here, so it is installed and scoped to " +
-                                "itself. Nothing has asked for settings since this app " +
-                                "started, which is normal until a hooked process restarts."
+                                "itself. No hooked app has asked for settings yet, which is " +
+                                "normal until one restarts."
 
                         else ->
                             "Add \"Lost Xposed\" to this module's own scope in the framework " +
@@ -341,10 +385,11 @@ class MainActivity : Activity() {
             Ui.caption(
                 this@MainActivity,
                 "Tick these in your framework manager. A feature whose process is not in " +
-                    "scope installs nothing and reports nothing — it does not fail loudly. " +
-                    "A tick means that process has actually read its settings, which is the " +
-                    "only thing this app can know for certain; no tick is not proof of " +
-                    "anything, since the process may not have started since you set it up.",
+                    "scope installs nothing and reports nothing. It does not fail loudly. " +
+                    "A tick means that process has read its settings since the phone last " +
+                    "started, which is the only thing this app can know for certain. A missing " +
+                    "tick proves nothing on its own: the process may not have started since " +
+                    "you set it up.",
             ),
         )
         ScopeAdvice.required(this@MainActivity).forEachIndexed { index, entry ->
@@ -364,6 +409,33 @@ class MainActivity : Activity() {
             addView(Ui.caption(this@MainActivity, entry.detail))
             addView(Ui.caption(this@MainActivity, "needed by ${entry.features.joinToString(", ")}"))
         }
+    }
+
+    /**
+     * The credit line. A plain card, not [Ui.heroCard]: that colour is reserved for the one
+     * thing on screen that matters most, which [statusCard] already uses it for, and a second
+     * accent-bordered card here would read as a second status rather than a signature.
+     */
+    private fun authorCard(): LinearLayout = Ui.card(this).apply {
+        addView(
+            Ui.body(this@MainActivity, "🌙 uraniam9", Ui.accent(this@MainActivity)).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                setTypeface(typeface, Typeface.BOLD)
+                isClickable = true
+                setOnClickListener { openUrl(Links.GITHUB) }
+            },
+        )
+        addView(Ui.spacer(this@MainActivity, 6))
+        addView(
+            Ui.linkedCaption(
+                this@MainActivity,
+                "Also behind Lune Bridge and SonoLune",
+                mapOf(
+                    "Lune Bridge" to { openUrl(Links.LUNE_BRIDGE) },
+                    "SonoLune" to { openUrl(Links.SONOLUNE) },
+                ),
+            ),
+        )
     }
 
     private fun featureCard(descriptor: FeatureDescriptor) = Ui.card(this) {
@@ -435,5 +507,25 @@ class MainActivity : Activity() {
             seconds < 3600 -> "${seconds / 60} min ago"
             else -> "${seconds / 3600} h ago"
         }
+    }
+
+    private companion object {
+        /**
+         * Deliberately not sorted by verification state. That put the newly verified features
+         * at the top every time one crossed the line, which reshuffled the list out from under
+         * anyone who had learned where a feature sat. This order is picked once: the status
+         * bar clock first, since it is what most people came for, then the two just-verified
+         * system_server features, then the two still asking for their first real test, then
+         * the read-only counter last, since it is a tool for the other six rather than a
+         * feature on its own.
+         */
+        val CARD_ORDER = listOf(
+            "core.smartstatusbar",
+            "core.hardwarekeys",
+            "core.notificationrules",
+            "core.displayprofiles",
+            "core.textengine",
+            "core.powerinspector",
+        )
     }
 }

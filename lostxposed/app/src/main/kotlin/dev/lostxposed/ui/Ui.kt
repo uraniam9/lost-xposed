@@ -25,7 +25,7 @@ import android.widget.TextView
  * Programmatic views rather than XML or Compose.
  *
  * The settings editor is generated from each feature's declared [dev.lostxposed.core.api.SettingSpec],
- * so there is no fixed layout to inflate — and pulling AndroidX or Compose into the APK for a
+ * so there is no fixed layout to inflate, and pulling AndroidX or Compose into the APK for a
  * handful of rows would add a large dependency tree to a module that currently has none.
  *
  * Colours are resolved per call rather than held as constants, because the same value cannot
@@ -57,6 +57,35 @@ object Ui {
     fun warn(context: Context): Int = pick(context, 0xFF8A6100.toInt(), 0xFFE8B84B.toInt())
 
     fun danger(context: Context): Int = pick(context, 0xFFB3261E.toInt(), 0xFFF2857D.toInt())
+
+    /**
+     * The platform's raised surface, the colour it uses for its own dialogs and menus. On
+     * Material You that follows the wallpaper, so a dialog drawn on it sits with everything
+     * around it instead of on a colour picked for one phone.
+     */
+    fun surface(context: Context): Int {
+        val a = context.obtainStyledAttributes(intArrayOf(android.R.attr.colorBackgroundFloating))
+        return try {
+            a.getColor(0, pick(context, 0xFFFFFFFF.toInt(), 0xFF202124.toInt()))
+        } finally {
+            a.recycle()
+        }
+    }
+
+    /**
+     * The window's own background, whatever it resolves to here. Every card is a hairline
+     * border on a transparent fill, so this colour is what is actually behind them, and on a
+     * Material You device it follows the wallpaper. A chip row fading to a colour picked for
+     * one phone would show a visible seam on any other.
+     */
+    fun pageBackground(context: Context): Int {
+        val a = context.obtainStyledAttributes(intArrayOf(android.R.attr.colorBackground))
+        return try {
+            a.getColor(0, pick(context, 0xFFFFFFFF.toInt(), 0xFF000000.toInt()))
+        } finally {
+            a.recycle()
+        }
+    }
 
     private fun hairline(context: Context): Int = pick(context, 0x1F000000, 0x33FFFFFF)
 
@@ -202,6 +231,52 @@ object Ui {
         setOnClickListener { onClick() }
     }
 
+    /** The main choice on a surface: filled in the accent, the same as the Restart System UI pill. */
+    fun primaryButton(context: Context, label: String, onClick: () -> Unit): TextView =
+        TextView(context).apply {
+            text = label
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(0xFFFFFFFF.toInt())
+            gravity = Gravity.CENTER
+            val v = dp(context, 14)
+            setPadding(0, v, 0, v)
+            background = RippleDrawable(
+                ColorStateList.valueOf(0x33FFFFFF),
+                GradientDrawable().apply {
+                    cornerRadius = dp(context, 28).toFloat()
+                    setColor(accent(context))
+                },
+                null,
+            )
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+
+    /** A quieter choice under a primary one. No fill, but still a full-width tap target. */
+    fun textButton(context: Context, label: String, colour: Int, onClick: () -> Unit): TextView =
+        TextView(context).apply {
+            text = label
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(colour)
+            gravity = Gravity.CENTER
+            val v = dp(context, 12)
+            setPadding(0, v, 0, v)
+            background = RippleDrawable(
+                ColorStateList.valueOf(tint(context, accent(context), 0x33)),
+                null,
+                GradientDrawable().apply {
+                    cornerRadius = dp(context, 28).toFloat()
+                    setColor(Color.WHITE)
+                },
+            )
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+
     /**
      * A tappable row with a leading label and a trailing hint. Used for everything that
      * navigates or opens a link, so a link off to the web and a link to another screen do not
@@ -241,6 +316,50 @@ object Ui {
                 setTextColor(muted(context))
             },
         )
+    }
+
+    /**
+     * A question that reveals its answer on tap, collapsed again on the next.
+     *
+     * For an honest answer that runs to a paragraph: all of them open at once is a wall of
+     * text nobody reads looking for the one line they wanted. Collapsed keeps the question
+     * visible and the paragraph one tap away, without cutting a word of it.
+     */
+    fun expandable(context: Context, question: String, content: LinearLayout.() -> Unit): LinearLayout {
+        lateinit var answer: LinearLayout
+        lateinit var chevron: TextView
+
+        fun toggle() {
+            val opening = answer.visibility != View.VISIBLE
+            answer.visibility = if (opening) View.VISIBLE else View.GONE
+            chevron.text = if (opening) "−" else "+"
+        }
+
+        return card(context) { toggle() }.apply {
+            addView(
+                row(context).apply {
+                    addView(
+                        body(context, question).apply {
+                            setTypeface(typeface, Typeface.BOLD)
+                            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+                        },
+                    )
+                    chevron = TextView(context).apply {
+                        text = "+"
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                        setTextColor(muted(context))
+                    }
+                    addView(chevron)
+                },
+            )
+            answer = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                visibility = View.GONE
+                setPadding(0, dp(context, 10), 0, 0)
+                content()
+            }
+            addView(answer)
+        }
     }
 
     /** A tappable block with a hairline border, used for both status and feature rows. */
@@ -301,23 +420,36 @@ object Ui {
         val scroller = screen(activity, content)
         addView(scroller)
 
+        // Small and quiet on purpose: a pill that shouted sat on the page like a sticker.
+        // Little elevation for the same reason, so it reads as part of the surface rather
+        // than a hard-edged shape cutting a shadow across whatever is behind it.
         val pill = TextView(activity).apply {
             text = label
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(0xFFFFFFFF.toInt())
             gravity = Gravity.CENTER
-            val h = dp(activity, 22)
-            val v = dp(activity, 14)
+            val h = dp(activity, 16)
+            val v = dp(activity, 9)
             setPadding(h, v, h, v)
             background = GradientDrawable().apply {
-                cornerRadius = dp(activity, 28).toFloat()
+                cornerRadius = dp(activity, 20).toFloat()
                 setColor(accent(activity))
             }
-            elevation = dp(activity, 6).toFloat()
+            elevation = dp(activity, 2).toFloat()
             isClickable = true
             setOnClickListener { onClick() }
         }
+
+        // Measured now, synchronously, rather than read back after a layout pass. The pill's
+        // height depends only on its own text and padding, never on the window it ends up in,
+        // so there is a real number to measure before it is even attached, and nothing to wait
+        // on: no requestLayout(), no post {}, no race with whichever runs first.
+        pill.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val pillHeight = pill.measuredHeight
 
         addView(
             pill,
@@ -328,11 +460,15 @@ object Ui {
 
         setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars())
-            (pill.layoutParams as FrameLayout.LayoutParams).bottomMargin =
-                bars.bottom + dp(activity, 16)
+            val gap = dp(activity, 20)
+            (pill.layoutParams as FrameLayout.LayoutParams).bottomMargin = bars.bottom + gap
             pill.requestLayout()
-            // The pill floats over the list, so the list needs room to scroll clear of it.
-            scroller.setPadding(0, bars.top, 0, bars.bottom + dp(activity, 84))
+            // The pill floats over the list at every scroll position, not only once the list
+            // is scrolled to its end, so whatever normally sits last has to clear its real
+            // height, not a guess at it. A guess (84dp, tuned against one label at one font
+            // scale) was the bug: enough for that label, not enough once a longer one wrapped
+            // to two lines or the system font was a step larger.
+            scroller.setPadding(0, bars.top, 0, bars.bottom + gap + pillHeight + gap)
             insets
         }
     }
@@ -340,7 +476,7 @@ object Ui {
     /**
      * A fixed region above a scrolling one.
      *
-     * For anything that has to stay in view while you change what feeds it — the clock
+     * For anything that has to stay in view while you change what feeds it: the clock
      * preview, which is useless if it scrolls away the moment you reach the setting it is
      * previewing. Putting it in the scroll view also pushed every actual setting below the
      * fold, which is the other half of the problem.
@@ -397,17 +533,47 @@ object Ui {
             }
         }
 
-    /** A horizontal strip of chips that scrolls rather than wrapping or clipping. */
-    fun chipRow(context: Context): Pair<HorizontalScrollView, LinearLayout> {
+    /**
+     * A horizontal strip of chips that scrolls rather than wrapping, with each edge fading
+     * into the page behind it instead of cutting a chip off mid-shape at the screen edge.
+     *
+     * Measured against the actual complaint: on a wide enough screen a preset row ran past
+     * the edge and the last chip was sheared clean off, no gradient, no hint that a swipe
+     * would reveal the rest. It looked unfinished because, at that edge, it was.
+     */
+    fun chipRow(context: Context): Pair<View, LinearLayout> {
         val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
         val scroller = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
             addView(row)
+        }
+
+        val bg = pageBackground(context)
+        val fadeWidth = dp(context, 28)
+        fun edge(atStart: Boolean) = View(context).apply {
+            isClickable = false
+            background = GradientDrawable(
+                if (atStart) {
+                    GradientDrawable.Orientation.LEFT_RIGHT
+                } else {
+                    GradientDrawable.Orientation.RIGHT_LEFT
+                },
+                intArrayOf(bg, tint(context, bg, 0x00)),
+            )
+            layoutParams = FrameLayout.LayoutParams(fadeWidth, MATCH_PARENT).apply {
+                gravity = if (atStart) Gravity.START else Gravity.END
+            }
+        }
+
+        return FrameLayout(context).apply {
+            addView(scroller, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(edge(atStart = true))
+            addView(edge(atStart = false))
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
                 topMargin = dp(context, 10)
             }
-        }
-        return scroller to row
+        } to row
     }
 
     fun spacer(context: Context, height: Int): View = View(context).apply {

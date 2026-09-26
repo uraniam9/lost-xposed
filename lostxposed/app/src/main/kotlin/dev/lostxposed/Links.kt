@@ -23,6 +23,9 @@ object Links {
 
     val SOURCE: String? = REPO.takeIf { PUBLISHED }
 
+    /** The person, not this one repo. Not gated on [PUBLISHED]: the profile exists either way. */
+    const val GITHUB = "https://github.com/uraniam9"
+
     /**
      * Straight at the templates rather than at the issue list, for the reason Lune Bridge
      * gives: a form that already asks for the device and the diagnostics gets those answers,
@@ -52,7 +55,7 @@ object Links {
      */
     val SUPPORT_NOTE =
         "Early builds, a say in what gets built next, and help straight from me. The source " +
-            "stays public — you are paying for first, not for access."
+            "stays public. You are paying for first, not for access."
 
     /** The two things on the credit line, each to its own page. */
     const val SONOLUNE = "https://play.google.com/store/apps/details?id=com.soundsoftlab.sonolune"
@@ -72,7 +75,7 @@ object Links {
             name = "Lune Bridge",
             tagline = "Warmer, darker, calmer screens. Candlelight down to 1700K, dimming " +
                 "below the panel minimum, and a flicker-safe mode for PWM eye strain. A root " +
-                "module — no Xposed needed.",
+                "module, no Xposed needed.",
             url = "https://github.com/uraniam9/lune-bridge",
         ),
         Work(
