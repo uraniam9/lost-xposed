@@ -1,13 +1,21 @@
 package dev.lostxposed
 
 import android.app.Activity
-import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.util.TypedValue
+import android.view.ViewGroup
+import android.view.Window
+import android.widget.FrameLayout
+import dev.lostxposed.ui.Ui
 import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONObject
@@ -56,24 +64,44 @@ object UpdateCheck {
      * about a check they did not ask for.
      */
     fun check(activity: Activity) {
-        if (Links.SOURCE == null) return
-        if (!isEnabled(activity)) return
+        if (Links.SOURCE == null) return note("not checking: repository not published")
+        if (!isEnabled(activity)) return note("not checking: turned off")
 
         val prefs = prefs(activity)
         val since = System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK, 0)
-        if (since < CACHE_MS) return
+        if (since < CACHE_MS) return note("not checking: last check was ${since / 60_000} min ago")
 
+        note("checking $MANIFEST")
         Thread {
             val release = fetch() ?: return@Thread
             prefs.edit().putLong(KEY_LAST_CHECK, System.currentTimeMillis()).apply()
 
-            if (release.versionCode <= BuildConfig.VERSION_CODE) return@Thread
-            if (release.versionCode == prefs.getInt(KEY_SKIPPED, -1)) return@Thread
+            if (release.versionCode <= BuildConfig.VERSION_CODE) {
+                return@Thread note(
+                    "up to date: newest is ${release.versionCode}, " +
+                        "this is ${BuildConfig.VERSION_CODE}",
+                )
+            }
+            if (release.versionCode == prefs.getInt(KEY_SKIPPED, -1)) {
+                return@Thread note("${release.version} is out but was skipped")
+            }
 
             Handler(Looper.getMainLooper()).post {
-                if (!activity.isFinishing && !activity.isDestroyed) offer(activity, release)
+                if (activity.isFinishing || activity.isDestroyed) {
+                    note("${release.version} is out, but the screen closed before it could say so")
+                } else {
+                    note("offering ${release.version}")
+                    offer(activity, release)
+                }
             }
         }.start()
+    }
+
+    // Every way out of check() says which one it took. For a while only a failed fetch said
+    // anything, so "nothing happened" looked the same whether it had worked, been switched
+    // off, been waiting out the cooldown or never reached the network at all.
+    private fun note(message: String) {
+        Log.i(TAG, "update check: $message")
     }
 
     private fun fetch(): Release? = runCatching {
@@ -89,27 +117,75 @@ object UpdateCheck {
             versionCode = json.getInt("versionCode"),
             url = json.optString("releaseUrl").ifEmpty { json.getString("url") },
         )
-    }.onFailure { Log.i(TAG, "update check skipped: ${it.javaClass.simpleName}") }.getOrNull()
+    }.onFailure { note("fetch failed: ${it.javaClass.simpleName}: ${it.message}") }.getOrNull()
 
+    /**
+     * Built from the app's own pieces. A platform AlertDialog takes its colours from the system
+     * theme, which on Material You follows the wallpaper, so it matches nothing else in the app,
+     * and it fits three buttons into one row.
+     *
+     * Three choices, stacked, most useful first:
+     *  - View release opens the release page, which is both the changelog and the download.
+     *  - Remind me later only closes this. The next check, half a day on, asks again.
+     *  - Skip this version stays quiet about this one for good, but still offers the next.
+     *
+     * A leading "v", the tag's spelling, is dropped so the two version lines read alike.
+     */
     private fun offer(activity: Activity, release: Release) {
-        AlertDialog.Builder(activity)
-            .setTitle("${release.version} is out")
-            .setMessage(
-                "You are on ${BuildConfig.VERSION_NAME}.\n\n" +
-                    "Updates are not automatic and never will be — this replaces a module " +
-                    "that hooks your system processes, so it is worth reading what changed " +
-                    "before you install it.",
+        val newest = release.version.removePrefix("v")
+        val dialog = Dialog(activity).apply { requestWindowFeature(Window.FEATURE_NO_TITLE) }
+
+        val card = Ui.column(activity, pad = 24).apply {
+            background = GradientDrawable().apply {
+                cornerRadius = Ui.dp(activity, 24).toFloat()
+                setColor(Ui.surface(activity))
+            }
+            addView(
+                Ui.title(activity, "$newest is out").apply {
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+                },
             )
-            .setPositiveButton("What changed") { _, _ ->
-                runCatching {
-                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.url)))
-                }
-            }
-            .setNegativeButton("Skip this one") { _, _ ->
-                prefs(activity).edit().putInt(KEY_SKIPPED, release.versionCode).apply()
-            }
-            .setNeutralButton("Later", null)
-            .show()
+            addView(Ui.spacer(activity, 6))
+            addView(Ui.body(activity, "You have ${BuildConfig.VERSION_NAME}."))
+            addView(Ui.spacer(activity, 10))
+            addView(
+                Ui.caption(
+                    activity,
+                    "Nothing updates on its own. This replaces a module that hooks your system " +
+                        "processes, so it's worth reading what changed before you install it.",
+                ).apply { setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f) },
+            )
+            addView(Ui.spacer(activity, 22))
+            addView(
+                Ui.primaryButton(activity, "View release") {
+                    dialog.dismiss()
+                    runCatching {
+                        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.url)))
+                    }
+                },
+            )
+            addView(Ui.spacer(activity, 6))
+            addView(Ui.textButton(activity, "Remind me later", Ui.accent(activity)) { dialog.dismiss() })
+            addView(
+                Ui.textButton(activity, "Skip this version", Ui.muted(activity)) {
+                    prefs(activity).edit().putInt(KEY_SKIPPED, release.versionCode).apply()
+                    dialog.dismiss()
+                },
+            )
+        }
+
+        dialog.setContentView(
+            FrameLayout(activity).apply {
+                val side = Ui.dp(activity, 20)
+                setPadding(side, 0, side, 0)
+                addView(card)
+            },
+        )
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        dialog.show()
     }
 
     private fun prefs(context: Context) =
