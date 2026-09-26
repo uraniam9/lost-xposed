@@ -18,12 +18,14 @@ import android.widget.Switch
 import android.widget.Toast
 import dev.lostxposed.core.api.FeatureDescriptor
 import dev.lostxposed.core.api.FeatureId
+import dev.lostxposed.core.api.ProcessTarget
 import dev.lostxposed.core.api.SettingSpec
 import dev.lostxposed.core.api.Template
 import dev.lostxposed.core.config.ConfigSchema
 import dev.lostxposed.core.config.ConfigWriter
 import dev.lostxposed.core.config.MapConfigStore
 import dev.lostxposed.core.config.StoreConfigSource
+import dev.lostxposed.features.powerinspector.PowerInspectorFeature
 import dev.lostxposed.features.smartstatusbar.ClockRenderer
 import dev.lostxposed.features.smartstatusbar.SmartStatusBarFeature
 import dev.lostxposed.entry.xposed.Features
@@ -33,7 +35,7 @@ import dev.lostxposed.ui.Ui
  * A settings editor generated from whatever the feature declares.
  *
  * Nothing here knows about any particular feature. Adding a setting to a feature gives it an
- * editor for free, and renaming one cannot leave a stale control behind — which is the whole
+ * editor for free, and renaming one cannot leave a stale control behind, which is the whole
  * reason [SettingSpec] exists rather than seven hand-written screens.
  */
 class FeatureActivity : Activity() {
@@ -87,6 +89,17 @@ class FeatureActivity : Activity() {
                 "${descriptor.category} · ${descriptor.stability} · risk ${descriptor.riskTier}",
             ),
         )
+        // Repeated here rather than left on the main screen's scope card alone, because a
+        // feature whose process is out of scope looks broken from exactly this screen, and
+        // that is not where the fix for it lives.
+        addView(
+            Ui.caption(
+                this@FeatureActivity,
+                "Needs ${descriptor.scopeHint} ticked in your framework manager's scope. " +
+                    "Nothing below does anything until it is.",
+                Ui.warn(this@FeatureActivity),
+            ),
+        )
 
         descriptor.detail?.let { detail ->
             addView(Ui.heading(this@FeatureActivity, "What this does"))
@@ -95,26 +108,22 @@ class FeatureActivity : Activity() {
             }
         }
 
-        // Shown only when something is still unproven. Explaining that a feature works is
-        // a paragraph nobody asked for.
-        val status = FeatureStatus.of(descriptor.id)
-        if (status.state != FeatureStatus.State.VERIFIED) {
-            addView(Ui.heading(this@FeatureActivity, "What has been tested"))
+        descriptor.howToTest?.let { steps ->
+            addView(Ui.spacer(this@FeatureActivity, 4))
             addView(
-                Ui.body(
-                    this@FeatureActivity,
-                    status.detail,
-                    when (status.state) {
-                        FeatureStatus.State.UNCONFIRMED -> Ui.warn(this@FeatureActivity)
-                        else -> Ui.muted(this@FeatureActivity)
-                    },
-                ),
+                Ui.expandable(this@FeatureActivity, "How do I check this is working?") {
+                    addView(Ui.prose(this@FeatureActivity, steps))
+                },
             )
         }
 
         if (descriptor.settings.isEmpty()) {
             addView(Ui.heading(this@FeatureActivity, "Settings"))
-            addView(Ui.body(this@FeatureActivity, "This feature has nothing to configure."))
+            if (descriptor.id == PowerInspectorFeature.ID) {
+                addView(powerReportCard())
+            } else {
+                addView(Ui.body(this@FeatureActivity, "This feature has nothing to configure."))
+            }
             return@apply
         }
 
@@ -122,7 +131,7 @@ class FeatureActivity : Activity() {
         if (perPackage) {
             addView(Ui.heading(this@FeatureActivity, "Applies to"))
             packageField = EditText(this@FeatureActivity).apply {
-                setText(ConfigSchema.ANY_PACKAGE)
+                setText(LastTarget.get(this@FeatureActivity, descriptor.id) ?: ConfigSchema.ANY_PACKAGE)
                 hint = "package name, or * for all"
                 inputType = InputType.TYPE_CLASS_TEXT
                 layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
@@ -134,6 +143,7 @@ class FeatureActivity : Activity() {
                     "A per-package value overrides the * default.",
                 ),
             )
+            addConfiguredTargets(this)
         } else {
             // Not added to the layout: a feature whose settings are all global has no
             // package to apply them to, and showing the field only invites the question.
@@ -174,11 +184,53 @@ class FeatureActivity : Activity() {
         addView(
             Ui.caption(
                 this@FeatureActivity,
-                "Settings are read when a process starts — ${descriptor.restartHint} for changes " +
-                    "to take effect.",
+                if (inSystemServer) {
+                    "Saving hands the change to the system straight away, and the message " +
+                        "after saving says whether it was taken. If not, it applies at the " +
+                        "next reboot."
+                } else {
+                    "Settings are read when a process starts: ${descriptor.restartHint} for " +
+                        "changes to take effect."
+                },
             ),
         )
         addView(Ui.spacer(this@FeatureActivity, 24))
+    }
+
+    /**
+     * Which targets already have something saved for this feature, as a row of chips that
+     * jump straight back to editing one.
+     *
+     * "Applies to" only ever shows one package at a time. Without this, a rule set for a
+     * second app is invisible the moment you are looking at the first: still on disk, still
+     * doing its job, and indistinguishable from having been cleared.
+     */
+    private fun addConfiguredTargets(parent: LinearLayout) {
+        val targets = writer.entriesFor(descriptor.id).keys.sorted()
+        if (targets.size <= 1) return
+        parent.addView(Ui.spacer(this@FeatureActivity, 6))
+        parent.addView(Ui.caption(this@FeatureActivity, "Already set for:"))
+        val (scroller, row) = Ui.chipRow(this)
+        targets.forEach { target ->
+            row.addView(Ui.chip(this, targetPhrase(target)) { loadTarget(target) })
+        }
+        parent.addView(scroller)
+    }
+
+    /** Switches "Applies to" to [target] and reloads every control to match what is saved there. */
+    private fun loadTarget(target: String) {
+        packageField.setText(target)
+        descriptor.settings.forEach { spec ->
+            val current = writer.read(descriptor.id, target, spec.key)
+            val asString = when {
+                spec.type == SettingSpec.Type.BOOLEAN ->
+                    (current as? Boolean ?: (spec.default == "true")).toString()
+                current != null -> current.toString()
+                else -> ""
+            }
+            fillers[spec]?.invoke(asString)
+        }
+        onControlChanged()
     }
 
     private fun controlFor(spec: SettingSpec): LinearLayout {
@@ -358,7 +410,7 @@ class FeatureActivity : Activity() {
             readout.text = if (isSet) {
                 format(spec, valueNow())
             } else {
-                "not set \u2014 the system value is left alone"
+                "not set, so the system value is left alone"
             }
         }
 
@@ -505,6 +557,66 @@ class FeatureActivity : Activity() {
      * Checking a mixer line otherwise costs a SystemUI restart and a walk back to the status
      * bar, which means you find out what `{seconds}` looks like well after you stopped caring.
      */
+    /**
+     * Power inspector has no settings, only a live count kept inside system_server's memory.
+     * Fetched here rather than shown as a static "nothing to configure", because for a feature
+     * whose entire point is a number that changes, that message would be actively misleading.
+     */
+    private fun powerReportCard(): LinearLayout {
+        lateinit var body: android.widget.TextView
+        val card = Ui.card(this).apply {
+            addView(
+                Ui.caption(
+                    this@FeatureActivity,
+                    "Read straight from system_server. Nothing here is saved or configured.",
+                ),
+            )
+            addView(Ui.spacer(this@FeatureActivity, 8))
+            body = Ui.mono(this@FeatureActivity, "fetching...")
+            addView(body)
+            addView(Ui.spacer(this@FeatureActivity, 8))
+            addView(Ui.button(this@FeatureActivity, "Refresh") { fetchPowerReport(body) })
+        }
+        fetchPowerReport(body)
+        return card
+    }
+
+    private fun fetchPowerReport(body: android.widget.TextView) {
+        body.text = "fetching..."
+        PowerReport.fetch(this) { raw ->
+            body.text = raw?.let(::renderPowerReport)
+                ?: "No answer from system_server. Either it has not run since the last " +
+                    "reboot on a build with this screen, or it has not finished booting yet."
+        }
+    }
+
+    /**
+     * Each line arrives as "uid\twakelocks\talarms". The uid is resolved to an app label here,
+     * in the app's own process, rather than asking system_server to guess at a name: it is a
+     * PackageManager lookup either way, and this is the process that already has one handy.
+     */
+    private fun renderPowerReport(raw: String): String {
+        if (raw.isBlank()) return "No wakelock or alarm activity recorded yet."
+        val pm = packageManager
+        return raw.lineSequence()
+            .mapNotNull { line ->
+                val parts = line.split('\t')
+                if (parts.size != 3) return@mapNotNull null
+                val uid = parts[0].toIntOrNull() ?: return@mapNotNull null
+                val label = pm.getPackagesForUid(uid)
+                    ?.firstOrNull()
+                    ?.let { pkg ->
+                        runCatching {
+                            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+                        }.getOrNull()
+                    }
+                    ?: "uid $uid"
+                "$label\n  ${parts[1]} wakelock(s), ${parts[2]} alarm(s)"
+            }
+            .joinToString("\n\n")
+            .ifEmpty { "No wakelock or alarm activity recorded yet." }
+    }
+
     private fun previewCard() = Ui.card(this) { refreshPreview() }.apply {
         addView(
             Ui.caption(
@@ -533,7 +645,7 @@ class FeatureActivity : Activity() {
         view.text = runCatching {
             ClockRenderer(SmartStatusBarFeature.Settings.from(source))
                 .text(fallback = "14:05")
-                ?: "(unchanged — the system clock, restyled if you set a style below)"
+                ?: "(unchanged: the system clock, restyled if you set a style below)"
         }.getOrElse { "cannot render: ${it.javaClass.simpleName}" }
     }
 
@@ -545,8 +657,14 @@ class FeatureActivity : Activity() {
     private fun targetPhrase(target: String): String =
         if (target == ConfigSchema.ANY_PACKAGE) "every app" else "\"$target\""
 
+    // restartHint is a fragment ("restart SystemUI", "reboot required"). A toast that ends on it
+    // as a sentence of its own needs the capital and the full stop.
+    private fun nextStep(): String =
+        descriptor.restartHint.replaceFirstChar { it.uppercase() } + "."
+
     private fun save() {
         val target = packageTarget()
+        LastTarget.set(this, descriptor.id, target)
         var written = 0
         var rejected: String? = null
 
@@ -574,27 +692,56 @@ class FeatureActivity : Activity() {
         }
 
         refreshPreview()
-        toast(
-            rejected?.let { "\"$it\" is not a valid number — nothing saved for it" }
-                ?: "Saved $written setting(s) for ${targetPhrase(target)} — ${descriptor.restartHint}",
+        rejected?.let {
+            toast("\"$it\" is not a valid number, so nothing was saved for it")
+            return
+        }
+        afterChange(
+            "Saved $written ${if (written == 1) "setting" else "settings"} for " +
+                "${targetPhrase(target)}.",
         )
     }
 
     private fun clear() {
         val target = packageTarget()
         writer.removeAll(descriptor.id, target)
-        toast(
+        afterChange(
             if (descriptor.settings.any { it.perPackage }) {
-                "Cleared for ${targetPhrase(target)} — ${descriptor.restartHint}"
+                "Cleared for ${targetPhrase(target)}."
             } else {
-                "Cleared — ${descriptor.restartHint}"
+                "Cleared."
             },
         )
         recreate()
     }
 
+    /**
+     * A system_server feature is handed the change now, and the toast waits to say whether it
+     * was taken. Anything else is read when its process starts, so the toast says which one.
+     */
+    private fun afterChange(done: String) {
+        if (!inSystemServer) {
+            toast("$done ${nextStep()}")
+            return
+        }
+        SystemSettings.push(this) { taken ->
+            toast(
+                if (taken) {
+                    "$done The system has it now."
+                } else {
+                    "$done The system did not answer, so it applies at the next reboot."
+                },
+            )
+        }
+    }
+
+    private val inSystemServer: Boolean
+        get() = descriptor.injects.any { it is ProcessTarget.SystemServer }
+
+    // The application context: clearing recreates this screen before the system's answer
+    // arrives, and a toast should not hold on to an activity that is already gone.
     private fun toast(message: String) =
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
 
     companion object {
         const val EXTRA_FEATURE = "feature"

@@ -29,7 +29,7 @@ import io.github.libxposed.api.XposedInterface
  *
  * Highest-scoring feature in the project (72/75) and the lowest-risk: it runs entirely in the
  * target app's own process, so a bad profile breaks one app rather than the boot, and the
- * hook surface — `Resources`/`DisplayMetrics`/`Configuration` — has been effectively frozen
+ * hook surface (`Resources`/`DisplayMetrics`/`Configuration`) has been effectively frozen
  * since API 1.
  *
  * Per-app locale and dark mode are deliberately absent: Android has shipped both natively
@@ -53,6 +53,12 @@ class DisplayProfilesFeature : Injection {
             "they mean the same thing on any phone. The app has to be in this " +
             "module\u0027s scope, and has to be restarted before you see a change.",
         description = "Density, font scale and refresh rate per application.",
+        howToTest = "Add the app you want to change to Lost Xposed's own scope in your " +
+            "framework manager first; nothing below does anything until you do. Set " +
+            "\"Applies to\" to its package name and try \"Fit more on screen\", the easiest " +
+            "change to actually see. Save, then force stop that app from Android's own " +
+            "App info screen (not just swiping it away in recents) and reopen it. Everything " +
+            "in it should look slightly smaller and more tightly packed than before.",
         category = Category.DISPLAY,
         injects = setOf(ProcessTarget.App(PackageFilter.ANY)),
         riskTier = RiskTier.APP_CRASH,
@@ -71,7 +77,7 @@ class DisplayProfilesFeature : Injection {
             SettingSpec(
                 DisplayProfile.KEY_REFRESH_RATE, "Refresh rate (Hz)", SettingSpec.Type.FLOAT,
                 baseline = SettingSpec.Baseline.REFRESH_RATE,
-                help = "A request, not a command — the display may refuse it under load.",
+                help = "A request, not a command. The display may refuse it under load.",
             ),
         ),
         /*
@@ -204,7 +210,7 @@ class DisplayProfilesFeature : Injection {
     }
 
     /**
-     * `preferredRefreshRate` is a request, not a command — the display pipeline may refuse it
+     * `preferredRefreshRate` is a request, not a command. The display pipeline may refuse it
      * under thermal or battery pressure. Diagnostics should report what was asked for, never
      * claim what was granted.
      */

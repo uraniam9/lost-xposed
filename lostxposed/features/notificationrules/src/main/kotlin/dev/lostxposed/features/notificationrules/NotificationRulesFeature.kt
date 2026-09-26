@@ -23,13 +23,13 @@ import java.lang.reflect.Method
 /**
  * Suppress notifications before they are ever posted.
  *
- * A `NotificationListenerService` can only read and dismiss — the notification has already
+ * A `NotificationListenerService` can only read and dismiss: the notification has already
  * appeared, already buzzed, already lit the screen. Channels give coarse per-category control
  * but cannot match on content. Only a hook inside `NotificationManagerService` can decide
  * *before* display, and that is the whole differentiator over every non-root notification app.
  *
  * Suppression works by not calling `proceed()`. Because that silently drops something the
- * user might be waiting for, every suppression is logged — a notification that vanishes with
+ * user might be waiting for, every suppression is logged. A notification that vanishes with
  * no trace is indistinguishable from a bug.
  */
 class NotificationRulesFeature : Injection {
@@ -41,14 +41,20 @@ class NotificationRulesFeature : Injection {
             "only when its text contains words you choose.\n\n" +
             "This is the part Android cannot do for you. Channels turn a whole " +
             "category off. A notification listener app can dismiss things, but only " +
-            "after they have already arrived \u2014 it has buzzed, lit the screen and " +
-            "landed on your lock screen by then. Running inside the notification " +
+            "after they have already arrived. By then it has buzzed, lit the screen and " +
+            "landed on your lock screen. Running inside the notification " +
             "service means the decision happens first.\n\n" +
             "Set \"Applies to\" to the app whose notifications you want to filter. " +
             "Block all silences it completely; keywords are comma separated and match " +
             "anywhere in the title or body.\n\n" +
             "Be careful what you filter. A blocked notification is gone, not delayed.",
         description = "Block notifications per app, or by keyword, before they are posted.",
+        howToTest = "Pick an app you do not mind missing a notification from for a minute, a " +
+            "game rather than anything you are waiting to hear from. Set \"Applies to\" to " +
+            "its package name, turn on \"Block everything\", and save. Its next notification " +
+            "should never arrive at all, not even briefly on the lock screen. Turn the switch " +
+            "back off afterwards, or use keywords instead if you only want some of an app's " +
+            "notifications blocked rather than all of them.",
         category = Category.NOTIFICATIONS,
         injects = setOf(ProcessTarget.SystemServer),
         riskTier = RiskTier.BOOTLOOP,
@@ -80,7 +86,7 @@ class NotificationRulesFeature : Injection {
             if (found.isEmpty()) {
                 Outcome.Fail(
                     Reason.METHOD_NOT_FOUND,
-                    "no void $ENQUEUE — a non-void form cannot be suppressed safely",
+                    "no void $ENQUEUE; a non-void form cannot be suppressed safely",
                 )
             } else {
                 Outcome.Pass("${found.size} hookable")
@@ -106,7 +112,7 @@ class NotificationRulesFeature : Injection {
     /**
      * Only void overloads are hooked. Suppression means returning without calling
      * `proceed()`, and inventing a return value for a non-void method would be guessing at
-     * what the caller expects — inside system_server that is not a guess worth making.
+     * what the caller expects. Inside system_server that is not a guess worth making.
      */
     private fun enqueueMethods(env: HookEnv): List<Method> =
         env.findClassOrNull(NMS)

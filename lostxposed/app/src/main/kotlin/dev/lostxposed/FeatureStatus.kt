@@ -25,7 +25,7 @@ object FeatureStatus {
     enum class State(val label: String) {
         /**
          * Seen working end to end on a device: hook installed, settings delivered,
-         * effect visible. Carries no badge — see [badge].
+         * effect visible. Carries no badge; see [badge].
          */
         VERIFIED("verified"),
 
@@ -86,7 +86,7 @@ object FeatureStatus {
             State.VERIFIED,
             "",
             "The reference hook. Confirmed installing in SystemUI and detaching cleanly while " +
-                "the process kept running — no reboot needed to turn a feature off.",
+                "the process kept running, so no reboot is needed to turn a feature off.",
         ),
         "core.smartstatusbar" to Entry(
             State.VERIFIED,
@@ -100,7 +100,7 @@ object FeatureStatus {
             "Never run on a phone. Needs an app added to this module's scope.",
             "7 tests cover how a profile is read and, most importantly, that an unset or " +
                 "malformed value leaves the system alone rather than applying a zero. The hook " +
-                "itself has never been seen applying a profile — that needs an ordinary app " +
+                "itself has never been seen applying a profile. That needs an ordinary app " +
                 "added to this module's scope.",
         ),
         "core.textengine" to Entry(
@@ -111,23 +111,28 @@ object FeatureStatus {
                 "silently, with every setting still looking correct. Never run on a device.",
         ),
         "core.notificationrules" to Entry(
-            State.UNCONFIRMED,
-            "Installs at boot. Not yet seen blocking anything.",
-            "Confirmed installing in system_server at a clean boot, and 10 tests cover the " +
-                "keyword matching. Whether settings reach it there is unconfirmed, so rules " +
-                "may not apply yet.",
+            State.VERIFIED,
+            "",
+            "Confirmed end to end: a notification containing a blocked keyword never arrived, " +
+                "a matching one without the keyword did, and settings reach it without a " +
+                "reboot when changed. 10 tests cover the keyword matching.",
         ),
         "core.hardwarekeys" to Entry(
-            State.UNCONFIRMED,
-            "Installs at boot. Not yet seen remapping anything.",
-            "Confirmed installing in system_server at a clean boot. Whether settings reach it " +
-                "there is unconfirmed, so remappings may not apply yet.",
+            State.VERIFIED,
+            "",
+            "Confirmed end to end: holding a volume key with the screen off and music " +
+                "playing skips a track, a shorter press still changes the volume, and holding " +
+                "power switches the torch. A short press of power still wakes the phone. " +
+                "Settings reach it without a reboot when changed.",
         ),
         "core.powerinspector" to Entry(
-            State.UNCONFIRMED,
-            "Installs at boot. Its counts have not been checked against anything.",
-            "Confirmed installing in system_server at a clean boot. Its counts have not been " +
-                "checked against another source.",
+            State.VERIFIED,
+            "",
+            "Confirmed installing at a clean boot and counting real activity: a live pull " +
+                "showed thousands of wakelocks against uid 1000 and over a thousand alarms " +
+                "from Google Play Services, both plausible. The counts themselves have not " +
+                "been checked against an independent source, so treat them as relative " +
+                "ranking between apps rather than an exact number.",
         ),
     )
 

@@ -1,7 +1,7 @@
 package dev.lostxposed.core.api
 
 /**
- * Contracts shared by every process this module is injected into — system_server, SystemUI,
+ * Contracts shared by every process this module is injected into: system_server, SystemUI,
  * the current IME, and arbitrary app processes.
  *
  * KEEP THIS MODULE SMALL AND DEPENDENCY-FREE. Anything added here is loaded into
@@ -64,6 +64,14 @@ data class FeatureDescriptor(
      * make it work. That is the difference between a label and an answer.
      */
     val detail: String? = null,
+    /**
+     * How to check this is actually doing something, in concrete steps rather than a
+     * description of the feature repeated in the imperative. Filled in for features nobody
+     * can just glance at and tell: a gesture, a per-app effect, something that has to not
+     * happen. Null where the effect is obvious the moment you look, such as the status bar
+     * clock changing the instant SystemUI restarts.
+     */
+    val howToTest: String? = null,
     val category: Category,
     val injects: Set<ProcessTarget>,
     val riskTier: RiskTier,
@@ -73,19 +81,39 @@ data class FeatureDescriptor(
     /** Named starting points, offered above the settings. Filled in, not applied. */
     val templates: List<Template> = emptyList(),
     /**
-     * False for the scaffolding features — the self check and the no-op reference — which
+     * False for the scaffolding features (the self check and the no-op reference), which
      * exist to prove the engine works rather than to do anything for the person holding the
      * phone. They are still registered, still probed and still reported; they just do not
      * belong at the top of a list of things you can turn on.
      */
     val userFacing: Boolean = true,
 ) {
-    /** Which processes have to restart for a change to this feature to take effect. */
+    /**
+     * What it takes for a change to this feature to take effect. For system_server, nothing:
+     * the app hands the change over when it is saved, and the toast says whether it was taken.
+     */
     val restartHint: String
         get() = when {
-            injects.any { it is ProcessTarget.SystemServer } -> "reboot required"
+            injects.any { it is ProcessTarget.SystemServer } -> "applied when saved"
             injects.any { it is ProcessTarget.SystemUi } -> "restart SystemUI"
             injects.any { it is ProcessTarget.CurrentIme } -> "restart the keyboard"
             else -> "restart the target app"
+        }
+
+    /**
+     * What has to be ticked in the framework manager before this can do anything at all.
+     *
+     * [ProcessTarget] already carries this; the main screen's scope card already works it out
+     * precisely, per package. This is the short version, repeated on the feature's own screen,
+     * because a feature whose process is out of scope looks broken from right here, not on a
+     * different screen you would have to already know to go check.
+     */
+    val scopeHint: String
+        get() = when {
+            injects.any { it is ProcessTarget.SystemServer } -> "System framework"
+            injects.any { it is ProcessTarget.SystemUi } -> "System UI"
+            injects.any { it is ProcessTarget.CurrentIme } -> "your keyboard"
+            injects.any { it is ProcessTarget.Self } -> "Lost Xposed itself"
+            else -> "the app you set it for below"
         }
 }

@@ -28,14 +28,14 @@ import io.github.libxposed.api.XposedInterface
  *
  * This is the Exi revival, and deliberately not a port. Exi hooked SwiftKey's internals and
  * died of it: SwiftKey is closed, R8-obfuscated and ships monthly, so every release broke a
- * runtime signature scanner. The features users actually wanted — cursor movement, selection,
- * undo — were never keyboard-specific; they are text editing.
+ * runtime signature scanner. The features users actually wanted (cursor movement, selection,
+ * undo) were never keyboard-specific; they are text editing.
  *
  * So this hooks `android.inputmethodservice.InputMethodService`, an AOSP class that is never
  * obfuscated and has been stable for a decade, and drives editing through `InputConnection`,
  * the contract every keyboard already uses to talk to every editor. Coverage therefore
  * includes Compose `BasicTextField`, WebView and Flutter, none of which a `TextView` hook can
- * reach — and that coverage grows as the platform moves to Compose rather than shrinking.
+ * reach, and that coverage grows as the platform moves to Compose rather than shrinking.
  */
 class TextEngineFeature : Injection {
 
@@ -50,9 +50,16 @@ class TextEngineFeature : Injection {
             "selection turns the same gesture into a way to select text.\n\n" +
             "Tick your keyboard below. The gesture is read by the keyboard\u0027s own " +
             "process, so that process has to be in this module\u0027s scope, and it " +
-            "has to restart before anything happens \u2014 switch to another keyboard " +
+            "has to restart before anything happens. Switching to another keyboard " +
             "and back is usually enough.",
         description = "Two-finger cursor and selection gestures on any keyboard, in any app.",
+        howToTest = "Open any text field so your keyboard appears, and type a sentence. Put " +
+            "two fingers down on the keyboard itself, not the text field, and drag sideways: " +
+            "the cursor should move, with no letters typed. Drag up or down instead and it " +
+            "moves by line. Turn on \"Jump by word\" and the same sideways drag jumps a word " +
+            "at a time. Turn on \"Extend selection\" and it selects text instead of just " +
+            "moving the caret. One finger still types normally the whole time; only two " +
+            "fingers together do anything here.",
         category = Category.INPUT,
         injects = setOf(ProcessTarget.App(PackageFilter.ANY)),
         riskTier = RiskTier.APP_CRASH,
@@ -123,7 +130,7 @@ class TextEngineFeature : Injection {
             ?.firstOrNull { it.name == ON_CREATE_INPUT_VIEW && it.parameterCount == 0 }
 
     /**
-     * Wraps whatever view the keyboard built. We never inspect or modify it — the host
+     * Wraps whatever view the keyboard built. We never inspect or modify it: the host
      * keyboard keeps full control of its own layout, which is what keeps this working across
      * keyboard updates.
      */
