@@ -26,7 +26,7 @@ import java.lang.reflect.Method
  * apps rather than saving battery. What is still missing is visibility: `batterystats` is
  * neutered for ordinary apps, so nobody can see which app is actually asking for what.
  *
- * Every hook calls `proceed()` unchanged. This feature must never alter behaviour — it runs
+ * Every hook calls `proceed()` unchanged. This feature must never alter behaviour. It runs
  * in `system_server`, where a mistake is a bootloop rather than a crash, which is also why it
  * sits behind the boot guard.
  */
@@ -36,15 +36,16 @@ class PowerInspectorFeature : Injection {
         id = ID,
         name = "Power inspector",
         detail = "Counts how often each app asks the system to keep your phone awake " +
-            "\u2014 wakelocks \u2014 and how often it sets an alarm to wake it up later.\n\n" +
+            "(a wakelock), and how often it sets an alarm to wake it up later.\n\n" +
             "It only counts. It does not block anything, deny anything, or change how " +
             "any app behaves, so it cannot break an app that relies on either.\n\n" +
             "The point is to find out which app is draining the battery before you go " +
             "looking for something to fix. Android\u0027s own battery screen tells you " +
             "what used power; this tells you what kept asking.\n\n" +
-            "There is nothing to configure. It runs inside system_server, so it only " +
-            "starts at boot, and the tally is read with: adb logcat -s LostXposed " +
-            "after adb shell am broadcast -a dev.lostxposed.POWER",
+            "There is nothing to configure. Open this card for the live count, fetched " +
+            "straight from system_server. Nothing is saved anywhere: closing the app loses " +
+            "nothing but the number on screen, since the real tally lives in system_server " +
+            "and keeps counting until the next reboot.",
         description = "Counts wakelock and alarm requests per app. Read-only; blocks nothing.",
         category = Category.POWER,
         injects = setOf(ProcessTarget.SystemServer),
@@ -101,7 +102,7 @@ class PowerInspectorFeature : Injection {
 
     /**
      * Matched by name across every overload. Signatures for these change most releases, so
-     * binding to one exact form would break on the next Android version for no benefit — the
+     * binding to one exact form would break on the next Android version for no benefit: the
      * attribution comes from the binder caller, not the arguments.
      */
     private fun wakelockMethods(env: HookEnv): List<Method> =

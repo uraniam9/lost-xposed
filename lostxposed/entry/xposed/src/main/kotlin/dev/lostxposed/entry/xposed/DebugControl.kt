@@ -14,12 +14,15 @@ import dev.lostxposed.features.noop.NoOpFeature
 import dev.lostxposed.features.powerinspector.PowerLedger
 
 /**
- * A temporary control channel so a hooked process can be driven from adb:
+ * A temporary control channel so a hooked process can be driven from outside:
  *
- *     adb shell am broadcast -a dev.lostxposed.DISABLE --es feature core.noop
  *     adb shell am broadcast -a dev.lostxposed.STATUS
+ *     adb shell am broadcast -a dev.lostxposed.POWER
  *
- * This exists to make the Phase 3 exit criterion demonstrable — "installs, detaches, and
+ * DISABLE also exists, but only a build signed with this app's key can send it, which rules
+ * out adb as well as every other app.
+ *
+ * This exists to make the Phase 3 exit criterion demonstrable: "installs, detaches, and
  * reports diagnostics" is not provable without a way to ask for the detach.
  *
  * It is NOT the real control path. That is `getRemotePreferences()` in core:config, which is
@@ -39,17 +42,29 @@ internal object DebugControl {
         Handler(Looper.getMainLooper()).postDelayed({
             val context = currentApplication()
             if (context == null) {
-                Log.w(LOG_TAG, "[$packageName] no Context — debug control unavailable")
+                Log.w(LOG_TAG, "[$packageName] no Context, debug control unavailable")
                 return@postDelayed
             }
             runCatching {
+                val receiver = receiver(engine, packageName)
+                // Status and the power tally only write to the log, so any sender will do,
+                // adb included.
                 context.registerReceiver(
-                    receiver(engine, packageName),
+                    receiver,
                     IntentFilter().apply {
-                        addAction(ACTION_DISABLE)
                         addAction(ACTION_STATUS)
                         addAction(ACTION_POWER)
                     },
+                    Context.RECEIVER_EXPORTED,
+                )
+                // Disable changes what the phone does, so it needs the signature permission.
+                // Open, any installed app could switch features off: one whose notifications
+                // are being filtered could simply turn the filter off.
+                context.registerReceiver(
+                    receiver,
+                    IntentFilter(ACTION_DISABLE),
+                    ProcessControl.PERMISSION,
+                    null,
                     Context.RECEIVER_EXPORTED,
                 )
                 Log.i(LOG_TAG, "[$packageName] debug control ready")
@@ -76,7 +91,7 @@ internal object DebugControl {
                     }
 
                     // The counter is what distinguishes "installed" from "installed but never
-                    // called" — the same trap spike-01 avoided.
+                    // called", the same trap spike-01 avoided.
                     ACTION_STATUS -> Log.i(
                         LOG_TAG,
                         "[$packageName] active: " +

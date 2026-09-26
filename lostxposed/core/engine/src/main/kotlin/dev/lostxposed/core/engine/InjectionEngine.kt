@@ -24,7 +24,7 @@ class InjectionEngine(
     private val handles = ConcurrentHashMap<FeatureId, CopyOnWriteArrayList<XposedInterface.HookHandle>>()
 
     fun onProcessLoaded(env: HookEnv, ctx: ProcessContext): DiagnosticsReport {
-        val report = DiagnosticsReport("LostXposed — ${ctx.packageName}")
+        val report = DiagnosticsReport("LostXposed in ${ctx.packageName}")
         report.info("Process", "${ctx.processName} (pid ${android.os.Process.myPid()})")
         report.info("Environment", env.environment.toString())
         report.info(
@@ -48,9 +48,15 @@ class InjectionEngine(
                 return@forEach
             }
 
+            // Installing twice means every hooked call runs twice.
+            if (handles.containsKey(descriptor.id)) {
+                report.info(descriptor.name, "already running")
+                return@forEach
+            }
+
             val injection = registration.factory.create()
 
-            // Probe chain first. Its entries are what make the report diagnosable — the user
+            // Probe chain first. Its entries are what make the report diagnosable: the user
             // sees which link broke, not merely that something did.
             report.info(descriptor.name, "${descriptor.category} · ${descriptor.stability}")
             val probes = runCatching { injection.probes(env) }.getOrDefault(emptyList())
@@ -87,7 +93,7 @@ class InjectionEngine(
 
     /**
      * Undo every hook this feature installed in this process. Real because
-     * `HookHandle.unhook()` was confirmed on device — see spike-01.
+     * `HookHandle.unhook()` was confirmed on device; see spike-01.
      *
      * @return how many hooks were removed.
      */
@@ -98,6 +104,23 @@ class InjectionEngine(
             runCatching { handle.unhook() }.onSuccess { removed++ }
         }
         return removed
+    }
+
+    /**
+     * Run the selection again with [env], after taking out every feature that reads settings.
+     *
+     * For system_server, whose settings arrive after the boot and can change while it runs: a
+     * feature that stayed off for want of a setting gets installed, and one already running
+     * is put back with the new settings. A feature with nothing to configure is left alone.
+     * It is already doing all it ever will, and taking it out would throw away what it has
+     * gathered, the power inspector's tally for one.
+     */
+    fun reinstall(env: HookEnv, ctx: ProcessContext): DiagnosticsReport {
+        registry.registrations
+            .map { it.descriptor }
+            .filter { it.settings.isNotEmpty() }
+            .forEach { disable(it.id) }
+        return onProcessLoaded(env, ctx)
     }
 
     fun activeFeatures(): Set<FeatureId> = handles.keys.toSet()

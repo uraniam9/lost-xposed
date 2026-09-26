@@ -18,7 +18,7 @@ import dev.lostxposed.core.engine.LOG_TAG
  * something to ask of somebody who just wants a different clock. The module is already inside
  * that process, so it can stand up and end itself; the system brings SystemUI straight back.
  *
- * `force-stop` on SystemUI is a no-op, measured — the system refuses it. Killing our own pid
+ * `force-stop` on SystemUI is a no-op, measured: the system refuses it. Killing our own pid
  * from inside is the thing that actually works.
  *
  * **Guarded by a signature-level permission.** The receiver has to be exported, because the
@@ -58,7 +58,7 @@ internal object ProcessControl {
             val wanted = intent?.getStringExtra(EXTRA_TARGET)
             if (wanted != null && wanted != packageName) return
 
-            Log.i(LOG_TAG, "[$packageName] restart requested — ending this process")
+            Log.i(LOG_TAG, "[$packageName] restart requested, ending this process")
             Handler(Looper.getMainLooper()).postDelayed(
                 { Process.killProcess(Process.myPid()) },
                 KILL_DELAY_MS,
@@ -68,7 +68,7 @@ internal object ProcessControl {
 
     const val EXTRA_TARGET = "target"
 
-    private fun currentApplication(): Context? = runCatching {
+    fun currentApplication(): Context? = runCatching {
         Class.forName("android.app.ActivityThread")
             .getMethod("currentApplication")
             .invoke(null) as? Context

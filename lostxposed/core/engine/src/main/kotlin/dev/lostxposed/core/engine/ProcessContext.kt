@@ -21,7 +21,12 @@ data class ProcessContext(
 object TargetMatcher {
 
     fun matches(target: ProcessTarget, ctx: ProcessContext): Boolean = when (target) {
-        is ProcessTarget.SystemServer -> ctx.isSystemServer
+        // The system itself, not every package Android happens to load into system_server.
+        // The settings provider, telecom and fused location all run in there and were each
+        // handed the system_server features again on the test phone, with a class loader that
+        // cannot see the services those features hook.
+        is ProcessTarget.SystemServer ->
+            ctx.isSystemServer && ctx.packageName == ProcessContext.ANDROID
         is ProcessTarget.SystemUi -> ctx.isSystemUi
         is ProcessTarget.Self -> ctx.packageName == ctx.selfPackage
         is ProcessTarget.App -> target.filter.matches(ctx.packageName)
