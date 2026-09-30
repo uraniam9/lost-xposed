@@ -1,0 +1,39 @@
+name: Sync the Xposed module listing text
+
+# The listing repo's README and SUMMARY are what LSPosed and modules.lsposed.org show. They are
+# edited here, in xposed-listing/, and copied across on every push that changes them, so the
+# listing cannot drift from this repo the way it did when it still said alpha. Run it by hand
+# from the Actions tab to force a sync. Uses the same XPOSED_REPO_TOKEN as mirror-release.yml.
+
+on:
+  push:
+    branches: [main]
+    paths: ['xposed-listing/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_REPO: Xposed-Modules-Repo/io.github.uraniam9.lostxposed
+      GH_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy README.md and SUMMARY to the listing
+        run: |
+          for f in README.md SUMMARY; do
+            sha=$(gh api "repos/$TARGET_REPO/contents/$f" --jq .sha 2>/dev/null || true)
+            if [ -n "$sha" ] && [ "$(gh api "repos/$TARGET_REPO/contents/$f" --jq .content | base64 -d)" = "$(cat "xposed-listing/$f")" ]; then
+              echo "$f is already up to date"
+              continue
+            fi
+            gh api -X PUT "repos/$TARGET_REPO/contents/$f" \
+              -f message="Sync $f from uraniam9/lost-xposed@${GITHUB_SHA::7}" \
+              -f content="$(base64 -w0 "xposed-listing/$f")" \
+              ${sha:+-f sha="$sha"} --jq .commit.sha
+            echo "Updated $f"
+          done
