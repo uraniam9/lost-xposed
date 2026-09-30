@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/uraniam9/lost-xposed/releases/latest"><img src="https://img.shields.io/github/v/release/uraniam9/lost-xposed?include_prereleases&label=release&color=8a6bff&labelColor=151033&style=flat-square" alt="Latest release"></a>
-  <a href="https://github.com/uraniam9/lost-xposed/releases"><img src="https://img.shields.io/github/downloads/uraniam9/lost-xposed/total?label=downloads&color=8a6bff&labelColor=151033&style=flat-square" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/status-beta-8a6bff?labelColor=151033&style=flat-square" alt="Status: beta">
-  <img src="https://img.shields.io/badge/Android-13%2B-8a6bff?logo=android&logoColor=b9a8ff&labelColor=151033&style=flat-square" alt="Android 13+">
+  <a href="https://github.com/uraniam9/lost-xposed/releases/latest"><img src="https://img.shields.io/github/v/release/uraniam9/lost-xposed?include_prereleases&label=release&color=8a6bff&labelColor=151033&style=flat-square" alt="Latest release"></a>&nbsp;&nbsp;
+  <a href="https://github.com/uraniam9/lost-xposed/releases"><img src="https://img.shields.io/github/downloads/uraniam9/lost-xposed/total?label=downloads&color=8a6bff&labelColor=151033&style=flat-square" alt="Downloads"></a>&nbsp;&nbsp;
+  <a href="#read-this-before-you-install-it"><img src="https://img.shields.io/badge/status-beta-8a6bff?labelColor=151033&style=flat-square" alt="Status: beta"></a>&nbsp;&nbsp;
+  <a href="#read-this-before-you-install-it"><img src="https://img.shields.io/badge/Android-13%2B-8a6bff?logo=android&logoColor=b9a8ff&labelColor=151033&style=flat-square" alt="Android 13+"></a>&nbsp;&nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-GPL--3.0--or--later-8a6bff?labelColor=151033&style=flat-square" alt="Licence: GPL-3.0-or-later"></a>
 </p>
 
